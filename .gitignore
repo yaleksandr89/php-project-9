@@ -1,0 +1,22 @@
+# Composer dependencies
+/vendor/
+composer.lock
+
+# IDE and editor settings
+.idea/
+.vscode/
+*.iml
+
+# OS and misc
+.DS_Store
+Thumbs.db
+
+# PHPUnit cache / coverage
+.phpunit.result.cache
+coverage/
+
+# Logs
+*.log
+
+# Env files
+.env
