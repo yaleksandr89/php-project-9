@@ -15,14 +15,20 @@
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand" href="/">Анализатор страниц</a>
+        <a class="navbar-brand" href="<?= htmlspecialchars($homeUrl) ?>">Анализатор страниц</a>
         <div class="navbar-nav">
-            <a class="nav-link active" href="/">Главная</a>
+            <a class="nav-link active" href="<?= htmlspecialchars($homeUrl) ?>">Главная</a>
         </div>
     </div>
 </nav>
 
 <main class="container-lg mt-3">
+    <?php if (null !== $flash): ?>
+        <div class="alert alert-success" role="alert">
+            <?= htmlspecialchars($flash) ?>
+        </div>
+    <?php endif; ?>
+
     <?= $content ?>
 </main>
 </body>
