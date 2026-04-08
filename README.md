@@ -1,21 +1,21 @@
-### Hexlet tests and linter status:
+### Статус Hexlet tests и линтера:
 [![Actions Status](https://github.com/yaleksandr89/php-project-9/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/yaleksandr89/php-project-9/actions)
 
-# Page Analyzer
+# Анализатор страниц
 
-Demo: https://php-project-9-4jym.onrender.com
+Демо: https://php-project-9-4jym.onrender.com
 
-## Requirements
+## Требования
 
 - PHP >= 8.4
 - Composer
 - Make
 
-## Usage
+## Установка и запуск
 
 ```bash
 make install
 make start
 ```
 
-Open in browser: http://localhost:8000
+Открыть в браузере: http://localhost:8000
