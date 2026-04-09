@@ -66,7 +66,27 @@ return static function ($app, $renderer, $pdo, $flash) {
     })->setName('urls.store');
 
     $app->get('/urls', function (Request $request, Response $response) use ($pdo, $renderer, $flash, $routeParser) {
-        $stmt = $pdo->query('SELECT id, name, created_at FROM urls ORDER BY created_at DESC');
+
+        $sql = "
+            SELECT 
+                urls.id,
+                urls.name,
+                urls.created_at,
+                url_checks.created_at AS last_check_created_at,
+                url_checks.status_code
+            FROM urls
+            LEFT JOIN (
+                SELECT DISTINCT ON (url_id)
+                    url_id,
+                    created_at,
+                    status_code
+                FROM url_checks
+                ORDER BY url_id, created_at DESC
+            ) AS url_checks ON url_checks.url_id = urls.id
+            ORDER BY urls.id DESC
+        ";
+
+        $stmt = $pdo->query($sql);
         $urls = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         return $renderer->render($response, 'urls/index.phtml', [
@@ -83,10 +103,12 @@ return static function ($app, $renderer, $pdo, $flash) {
         $stmt->execute([$id]);
         $url = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        $checksStmt = $pdo->prepare('SELECT id, status_code, h1, title, description, created_at
-        FROM url_checks
-        WHERE url_id = ?
-        ORDER BY id DESC');
+        $checksStmt = $pdo->prepare('
+            SELECT id, status_code, h1, title, description, created_at
+            FROM url_checks
+            WHERE url_id = ?
+            ORDER BY id DESC
+        ');
         $checksStmt->execute([$id]);
         $checks = $checksStmt->fetchAll(\PDO::FETCH_ASSOC);
 
