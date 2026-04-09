@@ -83,10 +83,31 @@ return static function ($app, $renderer, $pdo, $flash) {
         $stmt->execute([$id]);
         $url = $stmt->fetch(\PDO::FETCH_ASSOC);
 
+        $checksStmt = $pdo->prepare('SELECT id, status_code, h1, title, description, created_at
+        FROM url_checks
+        WHERE url_id = ?
+        ORDER BY id DESC');
+        $checksStmt->execute([$id]);
+        $checks = $checksStmt->fetchAll(\PDO::FETCH_ASSOC);
+
         return $renderer->render($response, 'urls/show.phtml', [
             'url' => $url,
+            'checks' => $checks,
             'flash' => $flash->getMessage('success')[0] ?? null,
             'homeUrl' => $routeParser->urlFor('home'),
         ]);
     })->setName('urls.show');
+
+    $app->post('/urls/{id}/checks', function (Request $request, Response $response, array $args) use ($pdo, $flash, $routeParser) {
+        $urlId = $args['id'];
+
+        $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, created_at) VALUES (?, ?)');
+        $stmt->execute([$urlId, date('Y-m-d H:i:s')]);
+
+        $flash->addMessage('success', 'Страница успешно проверена');
+
+        return $response
+            ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))
+            ->withStatus(302);
+    })->setName('checks.store');
 };
