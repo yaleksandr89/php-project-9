@@ -24,6 +24,7 @@ return static function ($app, $renderer, $pdo, $flash) {
                 'flash' => $flash->getMessage('success')[0] ?? null,
                 'errorFlash' => $flash->getMessage('error')[0] ?? null,
                 'homeUrl' => $routeParser->urlFor('home'),
+                'urlsUrl' => $routeParser->urlFor('urls.index'),
             ]);
         }
     )->setName('home');
@@ -59,6 +60,7 @@ return static function ($app, $renderer, $pdo, $flash) {
                     'flash' => null,
                     'errorFlash' => $flash->getMessage('error')[0] ?? null,
                     'homeUrl' => $routeParser->urlFor('home'),
+                    'urlsUrl' => $routeParser->urlFor('urls.index'),
                 ]);
             }
 
@@ -128,6 +130,7 @@ return static function ($app, $renderer, $pdo, $flash) {
                 'flash' => $flash->getMessage('success')[0] ?? null,
                 'errorFlash' => $flash->getMessage('error')[0] ?? null,
                 'homeUrl' => $routeParser->urlFor('home'),
+                'urlsUrl' => $routeParser->urlFor('urls.index'),
             ]);
         }
     )->setName('urls.index');
@@ -165,6 +168,7 @@ return static function ($app, $renderer, $pdo, $flash) {
                 'flash' => $flash->getMessage('success')[0] ?? null,
                 'errorFlash' => $flash->getMessage('error')[0] ?? null,
                 'homeUrl' => $routeParser->urlFor('home'),
+                'urlsUrl' => $routeParser->urlFor('urls.index'),
             ]);
         }
     )->setName('urls.show');

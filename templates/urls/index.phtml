@@ -4,29 +4,33 @@
 
 <h1 class="mb-5">Сайты</h1>
 
-<table class="table table-bordered table-hover" data-test="urls">
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Имя</th>
-        <th>Дата создания</th>
-        <th>Код ответа</th>
-        <th>Дата последней проверки</th>
-    </tr>
-    </thead>
-    <tbody>
-    <?php foreach ($urls as $url): ?>
+<?php if ($urls === []): ?>
+    <p>Записей нет</p>
+<?php else: ?>
+    <table class="table table-bordered table-hover" data-test="urls">
+        <thead>
         <tr>
-            <td><?= htmlspecialchars((string) $url['id']) ?></td>
-            <td>
-                <a href="/urls/<?= htmlspecialchars((string) $url['id']) ?>">
-                    <?= htmlspecialchars($url['name']) ?>
-                </a>
-            </td>
-            <td><?= htmlspecialchars($url['created_at']) ?></td>
-            <td><?= htmlspecialchars((string) ($url['status_code'] ?? '')) ?></td>
-            <td><?= htmlspecialchars($url['last_check_created_at'] ?? '') ?></td>
+            <th>ID</th>
+            <th>Имя</th>
+            <th>Дата создания</th>
+            <th>Код ответа</th>
+            <th>Дата последней проверки</th>
         </tr>
-    <?php endforeach; ?>
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+        <?php foreach ($urls as $url): ?>
+            <tr>
+                <td><?= htmlspecialchars((string) $url['id']) ?></td>
+                <td>
+                    <a href="/urls/<?= htmlspecialchars((string) $url['id']) ?>">
+                        <?= htmlspecialchars($url['name']) ?>
+                    </a>
+                </td>
+                <td><?= htmlspecialchars($url['created_at']) ?></td>
+                <td><?= htmlspecialchars((string) ($url['status_code'] ?? '')) ?></td>
+                <td><?= htmlspecialchars($url['last_check_created_at'] ?? '') ?></td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+<?php endif; ?>
