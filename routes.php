@@ -1,18 +1,25 @@
 <?php
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
+use App\Repository\UrlCheckRepository;
+use App\Repository\UrlRepository;
+use App\Service\UrlCheckService;
+use App\Service\UrlService;
+use App\Support\CheckViewFormatter;
+use Slim\App;
+use Slim\Flash\Messages;
+use Slim\Views\PhpRenderer;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Symfony\Component\DomCrawler\Crawler;
 
 return static function (
-    $app,
-    $renderer,
-    $flash,
-    $urlRepository,
-    $urlCheckRepository,
-    $checkViewFormatter
+    App $app,
+    PhpRenderer $renderer,
+    Messages $flash,
+    UrlRepository $urlRepository,
+    UrlCheckRepository $urlCheckRepository,
+    CheckViewFormatter $checkViewFormatter,
+    UrlService $urlService,
+    UrlCheckService $urlCheckService
 ) {
     $routeParser = $app->getRouteCollector()->getRouteParser();
 
@@ -46,20 +53,13 @@ return static function (
             $renderer,
             $flash,
             $routeParser,
-            $urlRepository
+            $urlRepository,
+            $urlService
         ) {
             $data = $request->getParsedBody();
             $url = trim($data['url'] ?? '');
 
-            $errors = [];
-
-            if ($url === '') {
-                $errors[] = 'URL не должен быть пустым';
-            } elseif (mb_strlen($url) > 255) {
-                $errors[] = 'URL превышает 255 символов';
-            } elseif (!filter_var($url, FILTER_VALIDATE_URL)) {
-                $errors[] = 'Некорректный URL';
-            }
+            $errors = $urlService->validate($url);
 
             if ($errors !== []) {
                 return $renderer->render($response->withStatus(422), 'index.phtml', [
@@ -72,9 +72,7 @@ return static function (
                 ]);
             }
 
-            $parsedUrl = parse_url($url);
-            $normalizedUrl = "{$parsedUrl['scheme']}://{$parsedUrl['host']}";
-
+            $normalizedUrl = $urlService->normalize($url);
             $existingUrl = $urlRepository->findByName($normalizedUrl);
 
             if ($existingUrl) {
@@ -159,50 +157,32 @@ return static function (
             $flash,
             $routeParser,
             $urlRepository,
-            $urlCheckRepository
+            $urlCheckRepository,
+            $urlCheckService
         ) {
             $urlId = (int) $args['id'];
-
             $url = $urlRepository->findById($urlId);
 
-            $client = new Client([
-                'timeout' => 10,
-                'allow_redirects' => true,
-                'http_errors' => false,
-            ]);
+            $checkResult = $urlCheckService->check($url['name']);
 
-            try {
-                $httpResponse = $client->request('GET', $url['name']);
-                $statusCode = $httpResponse->getStatusCode();
-                $html = (string) $httpResponse->getBody();
+            if ($checkResult['success'] === false) {
+                $flash->addMessage('error', $checkResult['error']);
 
-                $crawler = new Crawler($html);
-
-                $h1 = $crawler->filter('h1')->count() > 0
-                    ? trim($crawler->filter('h1')->first()->text())
-                    : null;
-
-                $title = $crawler->filter('title')->count() > 0
-                    ? trim($crawler->filter('title')->text())
-                    : null;
-
-                $description = $crawler->filter('meta[name="description"]')->count() > 0
-                    ? trim((string) $crawler->filter('meta[name="description"]')->first()->attr('content'))
-                    : null;
-
-                $urlCheckRepository->create(
-                    $urlId,
-                    $statusCode,
-                    $h1,
-                    $title,
-                    $description,
-                    date('Y-m-d H:i:s')
-                );
-
-                $flash->addMessage('success', 'Страница успешно проверена');
-            } catch (GuzzleException $e) {
-                $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
+                return $response
+                    ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))
+                    ->withStatus(302);
             }
+
+            $urlCheckRepository->create(
+                $urlId,
+                $checkResult['statusCode'],
+                $checkResult['h1'],
+                $checkResult['title'],
+                $checkResult['description'],
+                date('Y-m-d H:i:s')
+            );
+
+            $flash->addMessage('success', 'Страница успешно проверена');
 
             return $response
                 ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))
