@@ -3,6 +3,8 @@
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../config/db.php';
 
+use App\Controller\HomeController;
+use App\Controller\UrlController;
 use App\Repository\UrlCheckRepository;
 use App\Repository\UrlRepository;
 use App\Service\SeoAnalyzer;
@@ -33,20 +35,34 @@ $httpClient = new Client([
 $urlCheckService = new UrlCheckService($httpClient, $seoAnalyzer);
 
 $app = AppFactory::create();
+$app->addErrorMiddleware(true, true, true);
 
 $renderer = new PhpRenderer(__DIR__ . '/../templates');
 $renderer->setLayout('layout.phtml');
 
-$registerRoutes = require __DIR__ . '/../routes.php';
-$registerRoutes(
-    $app,
+$routeParser = $app->getRouteCollector()->getRouteParser();
+
+$homeController = new HomeController($renderer, $flash, $routeParser);
+$urlController = new UrlController(
     $renderer,
     $flash,
+    $routeParser,
     $urlRepository,
     $urlCheckRepository,
     $checkViewFormatter,
-    $urlService,
-    $urlCheckService
+    $urlService
+);
+
+$registerRoutes = require __DIR__ . '/../routes.php';
+$registerRoutes(
+    $app,
+    $homeController,
+    $urlController,
+    $urlCheckService,
+    $urlRepository,
+    $urlCheckRepository,
+    $flash,
+    $routeParser
 );
 
 $app->run();
