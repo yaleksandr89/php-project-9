@@ -12,6 +12,7 @@ use App\Service\SeoAnalyzer;
 use App\Service\UrlCheckService;
 use App\Service\UrlService;
 use App\Support\CheckViewFormatter;
+use App\Support\ViewDataPreparer;
 use GuzzleHttp\Client;
 use Slim\Factory\AppFactory;
 use Slim\Flash\Messages;
@@ -42,10 +43,12 @@ $renderer = new PhpRenderer(__DIR__ . '/../templates');
 $renderer->setLayout('layout.phtml');
 
 $routeParser = $app->getRouteCollector()->getRouteParser();
+$viewDataPreparer = new ViewDataPreparer($flash, $routeParser);
 
-$homeController = new HomeController($renderer, $flash, $routeParser);
+$homeController = new HomeController($renderer, $viewDataPreparer);
 $urlController = new UrlController(
     $renderer,
+    $viewDataPreparer,
     $flash,
     $routeParser,
     $urlRepository,

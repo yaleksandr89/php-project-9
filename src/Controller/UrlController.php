@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Repository\UrlCheckRepository;
 use App\Repository\UrlRepository;
 use App\Service\UrlService;
 use App\Support\CheckViewFormatter;
+use App\Support\ViewDataPreparer;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Flash\Messages;
@@ -16,6 +19,7 @@ readonly class UrlController
 {
     public function __construct(
         private PhpRenderer $renderer,
+        private ViewDataPreparer $viewDataPreparer,
         private Messages $flash,
         private RouteParserInterface $routeParser,
         private UrlRepository $urlRepository,
@@ -33,14 +37,15 @@ readonly class UrlController
         $errors = $this->urlService->validate($url);
 
         if ($errors !== []) {
-            return $this->renderer->render($response->withStatus(422), 'index.phtml', [
-                'url' => $url,
-                'errors' => $errors,
-                'flash' => null,
-                'errorFlash' => $this->flash->getMessage('error')[0] ?? null,
-                'homeUrl' => $this->routeParser->urlFor('home'),
-                'urlsUrl' => $this->routeParser->urlFor('urls.index'),
-            ]);
+            return $this->renderer->render(
+                $response->withStatus(422),
+                'index.phtml',
+                $this->viewDataPreparer->prepare([
+                    'url' => $url,
+                    'errors' => $errors,
+                    'flash' => null,
+                ])
+            );
         }
 
         $normalizedUrl = $this->urlService->normalize($url);
@@ -67,13 +72,13 @@ readonly class UrlController
     {
         $urls = $this->urlRepository->getAllWithLastCheck();
 
-        return $this->renderer->render($response, 'urls/index.phtml', [
-            'urls' => $urls,
-            'flash' => $this->flash->getMessage('success')[0] ?? null,
-            'errorFlash' => $this->flash->getMessage('error')[0] ?? null,
-            'homeUrl' => $this->routeParser->urlFor('home'),
-            'urlsUrl' => $this->routeParser->urlFor('urls.index'),
-        ]);
+        return $this->renderer->render(
+            $response,
+            'urls/index.phtml',
+            $this->viewDataPreparer->prepare([
+                'urls' => $urls,
+            ])
+        );
     }
 
     public function show(Response $response, array $args): Response
@@ -84,13 +89,13 @@ readonly class UrlController
         $checks = $this->urlCheckRepository->findByUrlId($id);
         $formattedChecks = $this->checkViewFormatter->formatChecks($checks);
 
-        return $this->renderer->render($response, 'urls/show.phtml', [
-            'url' => $url,
-            'checks' => $formattedChecks,
-            'flash' => $this->flash->getMessage('success')[0] ?? null,
-            'errorFlash' => $this->flash->getMessage('error')[0] ?? null,
-            'homeUrl' => $this->routeParser->urlFor('home'),
-            'urlsUrl' => $this->routeParser->urlFor('urls.index'),
-        ]);
+        return $this->renderer->render(
+            $response,
+            'urls/show.phtml',
+            $this->viewDataPreparer->prepare([
+                'url' => $url,
+                'checks' => $formattedChecks,
+            ])
+        );
     }
 }
