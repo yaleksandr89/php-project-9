@@ -13,57 +13,32 @@ return static function (
     UrlController $urlController,
     UrlCheckController $urlCheckController
 ) {
-    // Главная страница (форма добавления URL)
-    $app->get(
-        '/',
-        function (
-            Request $request,
-            Response $response
-        ) use ($homeController) {
-            return $homeController->index($response);
-        }
-    )->setName('home');
+    // Главная страница
+    $app->get('/', function (Request $request, Response $response) use ($homeController) {
+        return $homeController->index($response);
+    })->setName('home');
 
-    // Добавление нового URL
-    $app->post(
-        '/urls',
-        function (
-            Request $request,
-            Response $response
-        ) use ($urlController) {
-            return $urlController->store($request, $response);
-        }
-    )->setName('urls.store');
+    // Добавление URL
+    $app->post('/urls', function (Request $request, Response $response) use ($urlController) {
+        return $urlController->store($request, $response);
+    })->setName('urls.store');
 
-    // Список всех URL с датой последней проверки
-    $app->get(
-        '/urls',
-        function (Request $request, Response $response) use ($urlController) {
-            return $urlController->index($response);
-        }
-    )->setName('urls.index');
+    // Список URL
+    $app->get('/urls', function (Request $request, Response $response) use ($urlController) {
+        return $urlController->index($response);
+    })->setName('urls.index');
 
-    // Страница конкретного URL и список сделанных проверок
-    $app->get(
-        '/urls/{id}',
-        function (
-            Request $request,
-            Response $response,
-            array $args
-        ) use ($urlController) {
-            return $urlController->show($response, $args);
-        }
-    )->setName('urls.show');
+    // Страница URL
+    $app->get('/urls/{id}', function (Request $request, Response $response, array $args) use ($urlController) {
+        return $urlController->show($response, $args);
+    })->setName('urls.show');
 
-    // Запуск проверки и анализа страницы URL
-    $app->post(
-        '/urls/{id}/checks',
-        function (
-            Request $request,
-            Response $response,
-            array $args
-        ) use ($urlCheckController) {
-            return $urlCheckController->store($response, $args);
-        }
-    )->setName('checks.store');
+    // Запуск проверки URL
+    $app->post('/urls/{id}/checks', function (
+        Request $request,
+        Response $response,
+        array $args
+    ) use ($urlCheckController) {
+        return $urlCheckController->store($response, $args);
+    })->setName('checks.store');
 };

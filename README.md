@@ -1,5 +1,3 @@
-### Статус Hexlet tests и линтера:
-
 [![Actions Status](https://github.com/yaleksandr89/php-project-9/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/yaleksandr89/php-project-9/actions)
 
 # Анализатор страниц
@@ -8,70 +6,72 @@
 
 ## Описание
 
-Веб-приложение для анализа сайтов. Позволяет добавлять URL, выполнять проверки доступности и проводить базовый SEO-анализ (h1, title, description).
+Веб-приложение для анализа сайтов.
+
+Позволяет:
+
+* добавлять URL
+* проверять доступность страниц
+* сохранять историю проверок
+* выполнять базовый SEO-анализ (_h1_, _title_, _description_)
 
 ## Требования
 
-* PHP >= 8.4
-* Composer
-* Make
-* PostgreSQL
+* `PHP >= 8.4`
+* `Composer`
+* `Make`
+* `PostgreSQL`
 
-## Переменные окружения
-
-Для работы приложения требуется переменная окружения:
-
-`DATABASE_URL` - строка подключения к PostgreSQL
-
-Пример: `postgresql://user:password@localhost:5432/dbname`
-
-## Установка и запуск
+## Установка
 
 ```bash
 make install
-make start
 ```
 
-Открыть в браузере: http://localhost:8000
+## Настройка окружения
+
+Необходимо задать переменную окружения: `DATABASE_URL`
+
+Пример: `postgresql://user:password@localhost:5432/dbname`
 
 ## Инициализация базы данных
-
-Перед запуском необходимо создать таблицы:
 
 ```bash
 psql -d "<DATABASE_URL>" -f database.sql
 ```
 
-Пример:
+Пример: `psql -d "postgresql://user:password@localhost:5432/dbname" -f database.sql`
+
+## Запуск
 
 ```bash
-psql -d "postgresql://user:password@localhost:5432/dbname" -f database.sql
+make start
 ```
+
+Приложение будет доступно по адресу: http://localhost:8000
 
 ## Функциональность
 
 * Добавление сайтов
 * Проверка доступности (HTTP статус)
 * Хранение истории проверок
-* Отображение последней проверки в списке сайтов
+* Отображение последней проверки
 * SEO-анализ страницы:
-
-    * h1
-    * title
-    * meta description
+  * _h1_
+  * _title_
+  * _meta description_
 
 ## Технологии
 
-* Slim Framework
-* PDO
-* PostgreSQL
-* Guzzle (HTTP-клиент)
-* Symfony DomCrawler + CSS Selector
+* `Slim Framework`
+* `PDO`
+* `PostgreSQL`
+* `Guzzle` (HTTP-клиент)
+* `Symfony DomCrawler` + `CSS Selector`
 
-## Примечание
+## Архитектура
 
-Для корректной работы с helper-функциями необходимо выполнить:
-
-```bash
-composer dump-autoload
-```
+* `Controllers` - обработка HTTP-запросов
+* `Services` - бизнес-логика
+* `Repositories` - работа с базой данных
+* `Support` - вспомогательные классы (форматирование, подготовка данных)
