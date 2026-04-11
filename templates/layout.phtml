@@ -1,6 +1,7 @@
 <?php
 /** @var string $homeUrl */
 /** @var string|null $flash */
+/** @var string|null $errorFlash */
 /** @var string $content */
 ?>
 
@@ -32,6 +33,12 @@
     <?php if (null !== $flash): ?>
         <div class="alert alert-success" role="alert">
             <?= htmlspecialchars($flash) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (null !== $errorFlash): ?>
+        <div class="alert alert-danger" role="alert">
+            <?= htmlspecialchars($errorFlash) ?>
         </div>
     <?php endif; ?>
 

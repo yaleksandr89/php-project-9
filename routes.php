@@ -1,5 +1,7 @@
 <?php
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -17,14 +19,14 @@ return static function ($app, $renderer, $pdo, $flash) {
             $routeParser
         ) {
             return $renderer->render($response, 'index.phtml', [
-            'url' => '',
-            'errors' => [],
-            'flash' => $flash->getMessage('success')[0] ?? null,
-            'homeUrl' => $routeParser->urlFor('home'),
+                'url' => '',
+                'errors' => [],
+                'flash' => $flash->getMessage('success')[0] ?? null,
+                'errorFlash' => $flash->getMessage('error')[0] ?? null,
+                'homeUrl' => $routeParser->urlFor('home'),
             ]);
         }
     )->setName('home');
-
 
     $app->post(
         '/urls',
@@ -52,10 +54,11 @@ return static function ($app, $renderer, $pdo, $flash) {
 
             if ($errors !== []) {
                 return $renderer->render($response->withStatus(422), 'index.phtml', [
-                'url' => $url,
-                'errors' => $errors,
-                'flash' => null,
-                'homeUrl' => $routeParser->urlFor('home'),
+                    'url' => $url,
+                    'errors' => $errors,
+                    'flash' => null,
+                    'errorFlash' => $flash->getMessage('error')[0] ?? null,
+                    'homeUrl' => $routeParser->urlFor('home'),
                 ]);
             }
 
@@ -70,8 +73,8 @@ return static function ($app, $renderer, $pdo, $flash) {
                 $flash->addMessage('success', 'Страница уже существует');
 
                 return $response
-                ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $existingUrl['id']]))
-                ->withStatus(302);
+                    ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $existingUrl['id']]))
+                    ->withStatus(302);
             }
 
             $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
@@ -82,11 +85,10 @@ return static function ($app, $renderer, $pdo, $flash) {
             $flash->addMessage('success', 'Страница успешно добавлена');
 
             return $response
-            ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $id]))
-            ->withStatus(302);
+                ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $id]))
+                ->withStatus(302);
         }
     )->setName('urls.store');
-
 
     $app->get(
         '/urls',
@@ -100,35 +102,35 @@ return static function ($app, $renderer, $pdo, $flash) {
             $routeParser
         ) {
             $sql = "
-            SELECT 
-                urls.id,
-                urls.name,
-                urls.created_at,
-                url_checks.created_at AS last_check_created_at,
-                url_checks.status_code
-            FROM urls
-            LEFT JOIN (
-                SELECT DISTINCT ON (url_id)
-                    url_id,
-                    created_at,
-                    status_code
-                FROM url_checks
-                ORDER BY url_id, created_at DESC
-            ) AS url_checks ON url_checks.url_id = urls.id
-            ORDER BY urls.id DESC
-        ";
+                SELECT 
+                    urls.id,
+                    urls.name,
+                    urls.created_at,
+                    url_checks.created_at AS last_check_created_at,
+                    url_checks.status_code
+                FROM urls
+                LEFT JOIN (
+                    SELECT DISTINCT ON (url_id)
+                        url_id,
+                        created_at,
+                        status_code
+                    FROM url_checks
+                    ORDER BY url_id, created_at DESC
+                ) AS url_checks ON url_checks.url_id = urls.id
+                ORDER BY urls.id DESC
+            ";
 
             $stmt = $pdo->query($sql);
             $urls = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             return $renderer->render($response, 'urls/index.phtml', [
-            'urls' => $urls,
-            'flash' => $flash->getMessage('success')[0] ?? null,
-            'homeUrl' => $routeParser->urlFor('home'),
+                'urls' => $urls,
+                'flash' => $flash->getMessage('success')[0] ?? null,
+                'errorFlash' => $flash->getMessage('error')[0] ?? null,
+                'homeUrl' => $routeParser->urlFor('home'),
             ]);
         }
     )->setName('urls.index');
-
 
     $app->get(
         '/urls/{id}',
@@ -149,23 +151,23 @@ return static function ($app, $renderer, $pdo, $flash) {
             $url = $stmt->fetch(\PDO::FETCH_ASSOC);
 
             $checksStmt = $pdo->prepare('
-            SELECT id, status_code, h1, title, description, created_at
-            FROM url_checks
-            WHERE url_id = ?
-            ORDER BY id DESC
-        ');
+                SELECT id, status_code, h1, title, description, created_at
+                FROM url_checks
+                WHERE url_id = ?
+                ORDER BY id DESC
+            ');
             $checksStmt->execute([$id]);
             $checks = $checksStmt->fetchAll(\PDO::FETCH_ASSOC);
 
             return $renderer->render($response, 'urls/show.phtml', [
-            'url' => $url,
-            'checks' => $checks,
-            'flash' => $flash->getMessage('success')[0] ?? null,
-            'homeUrl' => $routeParser->urlFor('home'),
+                'url' => $url,
+                'checks' => $checks,
+                'flash' => $flash->getMessage('success')[0] ?? null,
+                'errorFlash' => $flash->getMessage('error')[0] ?? null,
+                'homeUrl' => $routeParser->urlFor('home'),
             ]);
         }
     )->setName('urls.show');
-
 
     $app->post(
         '/urls/{id}/checks',
@@ -180,14 +182,31 @@ return static function ($app, $renderer, $pdo, $flash) {
         ) {
             $urlId = $args['id'];
 
-            $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, created_at) VALUES (?, ?)');
-            $stmt->execute([$urlId, date('Y-m-d H:i:s')]);
+            $stmt = $pdo->prepare('SELECT id, name FROM urls WHERE id = ?');
+            $stmt->execute([$urlId]);
+            $url = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-            $flash->addMessage('success', 'Страница успешно проверена');
+            $client = new Client([
+                'timeout' => 10,
+                'allow_redirects' => true,
+                'http_errors' => false,
+            ]);
+
+            try {
+                $httpResponse = $client->request('GET', $url['name']);
+                $statusCode = $httpResponse->getStatusCode();
+
+                $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, status_code, created_at) VALUES (?, ?, ?)');
+                $stmt->execute([$urlId, $statusCode, date('Y-m-d H:i:s')]);
+
+                $flash->addMessage('success', 'Страница успешно проверена');
+            } catch (GuzzleException $e) {
+                $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
+            }
 
             return $response
-            ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))
-            ->withStatus(302);
+                ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))
+                ->withStatus(302);
         }
     )->setName('checks.store');
 };
