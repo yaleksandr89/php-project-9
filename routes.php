@@ -4,6 +4,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Symfony\Component\DomCrawler\Crawler;
 
 return static function ($app, $renderer, $pdo, $flash) {
     $routeParser = $app->getRouteCollector()->getRouteParser();
@@ -199,9 +200,34 @@ return static function ($app, $renderer, $pdo, $flash) {
             try {
                 $httpResponse = $client->request('GET', $url['name']);
                 $statusCode = $httpResponse->getStatusCode();
+                $html = (string) $httpResponse->getBody();
 
-                $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, status_code, created_at) VALUES (?, ?, ?)');
-                $stmt->execute([$urlId, $statusCode, date('Y-m-d H:i:s')]);
+                $crawler = new Crawler($html);
+
+                $h1 = $crawler->filter('h1')->count() > 0
+                    ? trim($crawler->filter('h1')->first()->text())
+                    : null;
+
+                $title = $crawler->filter('title')->count() > 0
+                    ? trim($crawler->filter('title')->text())
+                    : null;
+
+                $description = $crawler->filter('meta[name="description"]')->count() > 0
+                    ? trim((string) $crawler->filter('meta[name="description"]')->first()->attr('content'))
+                    : null;
+
+                $stmt = $pdo->prepare(
+                    'INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?)'
+                );
+                $stmt->execute([
+                    $urlId,
+                    $statusCode,
+                    $h1,
+                    $title,
+                    $description,
+                    date('Y-m-d H:i:s'),
+                ]);
 
                 $flash->addMessage('success', 'Страница успешно проверена');
             } catch (GuzzleException $e) {
