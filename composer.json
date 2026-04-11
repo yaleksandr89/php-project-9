@@ -19,5 +19,10 @@
   },
   "scripts": {
     "lint": "phpcs"
+  },
+  "autoload": {
+    "files": [
+      "src/helpers.php"
+    ]
   }
 }
