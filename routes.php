@@ -1,79 +1,69 @@
 <?php
 
 use App\Controller\HomeController;
+use App\Controller\UrlCheckController;
 use App\Controller\UrlController;
-use App\Repository\UrlCheckRepository;
-use App\Repository\UrlRepository;
-use App\Service\UrlCheckService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
-use Slim\Flash\Messages;
-use Slim\Interfaces\RouteParserInterface;
 
 return static function (
     App $app,
     HomeController $homeController,
     UrlController $urlController,
-    UrlCheckService $urlCheckService,
-    UrlRepository $urlRepository,
-    UrlCheckRepository $urlCheckRepository,
-    Messages $flash,
-    RouteParserInterface $routeParser
+    UrlCheckController $urlCheckController
 ) {
-    $app->get('/', function (Request $request, Response $response) use ($homeController) {
-        return $homeController->index($response);
-    })->setName('home');
-
-    $app->post('/urls', function (Request $request, Response $response) use ($urlController) {
-        return $urlController->store($request, $response);
-    })->setName('urls.store');
-
-    $app->get('/urls', function (Request $request, Response $response) use ($urlController) {
-        return $urlController->index($response);
-    })->setName('urls.index');
-
-    $app->get('/urls/{id}', function (Request $request, Response $response, array $args) use ($urlController) {
-        return $urlController->show($response, $args);
-    })->setName('urls.show');
-
-    $app->post('/urls/{id}/checks', function (
-        Request $request,
-        Response $response,
-        array $args
-    ) use (
-        $flash,
-        $routeParser,
-        $urlRepository,
-        $urlCheckRepository,
-        $urlCheckService
-    ) {
-        $urlId = (int) $args['id'];
-        $url = $urlRepository->findById($urlId);
-
-        $checkResult = $urlCheckService->check($url['name']);
-
-        if ($checkResult['success'] === false) {
-            $flash->addMessage('error', $checkResult['error']);
-
-            return $response
-                ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))
-                ->withStatus(302);
+    // Главная страница (форма добавления URL)
+    $app->get(
+        '/',
+        function (
+            Request $request,
+            Response $response
+        ) use ($homeController) {
+            return $homeController->index($response);
         }
+    )->setName('home');
 
-        $urlCheckRepository->create(
-            $urlId,
-            $checkResult['statusCode'],
-            $checkResult['h1'],
-            $checkResult['title'],
-            $checkResult['description'],
-            date('Y-m-d H:i:s')
-        );
+    // Добавление нового URL
+    $app->post(
+        '/urls',
+        function (
+            Request $request,
+            Response $response
+        ) use ($urlController) {
+            return $urlController->store($request, $response);
+        }
+    )->setName('urls.store');
 
-        $flash->addMessage('success', 'Страница успешно проверена');
+    // Список всех URL с датой последней проверки
+    $app->get(
+        '/urls',
+        function (Request $request, Response $response) use ($urlController) {
+            return $urlController->index($response);
+        }
+    )->setName('urls.index');
 
-        return $response
-            ->withHeader('Location', $routeParser->urlFor('urls.show', ['id' => $urlId]))
-            ->withStatus(302);
-    })->setName('checks.store');
+    // Страница конкретного URL и список сделанных проверок
+    $app->get(
+        '/urls/{id}',
+        function (
+            Request $request,
+            Response $response,
+            array $args
+        ) use ($urlController) {
+            return $urlController->show($response, $args);
+        }
+    )->setName('urls.show');
+
+    // Запуск проверки и анализа страницы URL
+    $app->post(
+        '/urls/{id}/checks',
+        function (
+            Request $request,
+            Response $response,
+            array $args
+        ) use ($urlCheckController) {
+            return $urlCheckController->store($response, $args);
+        }
+    )->setName('checks.store');
 };

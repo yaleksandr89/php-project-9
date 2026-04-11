@@ -4,6 +4,7 @@ require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../config/db.php';
 
 use App\Controller\HomeController;
+use App\Controller\UrlCheckController;
 use App\Controller\UrlController;
 use App\Repository\UrlCheckRepository;
 use App\Repository\UrlRepository;
@@ -52,17 +53,20 @@ $urlController = new UrlController(
     $checkViewFormatter,
     $urlService
 );
+$urlCheckController = new UrlCheckController(
+    $flash,
+    $routeParser,
+    $urlRepository,
+    $urlCheckRepository,
+    $urlCheckService
+);
 
 $registerRoutes = require __DIR__ . '/../routes.php';
 $registerRoutes(
     $app,
     $homeController,
     $urlController,
-    $urlCheckService,
-    $urlRepository,
-    $urlCheckRepository,
-    $flash,
-    $routeParser
+    $urlCheckController
 );
 
 $app->run();
