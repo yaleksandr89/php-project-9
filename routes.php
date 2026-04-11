@@ -6,7 +6,14 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Symfony\Component\DomCrawler\Crawler;
 
-return static function ($app, $renderer, $pdo, $flash) {
+return static function (
+    $app,
+    $renderer,
+    $flash,
+    $urlRepository,
+    $urlCheckRepository,
+    $checkViewFormatter
+) {
     $routeParser = $app->getRouteCollector()->getRouteParser();
 
     $app->get(
@@ -37,9 +44,9 @@ return static function ($app, $renderer, $pdo, $flash) {
             Response $response
         ) use (
             $renderer,
-            $pdo,
             $flash,
-            $routeParser
+            $routeParser,
+            $urlRepository
         ) {
             $data = $request->getParsedBody();
             $url = trim($data['url'] ?? '');
@@ -68,9 +75,7 @@ return static function ($app, $renderer, $pdo, $flash) {
             $parsedUrl = parse_url($url);
             $normalizedUrl = "{$parsedUrl['scheme']}://{$parsedUrl['host']}";
 
-            $stmt = $pdo->prepare('SELECT id FROM urls WHERE name = ?');
-            $stmt->execute([$normalizedUrl]);
-            $existingUrl = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $existingUrl = $urlRepository->findByName($normalizedUrl);
 
             if ($existingUrl) {
                 $flash->addMessage('success', 'Страница уже существует');
@@ -80,10 +85,7 @@ return static function ($app, $renderer, $pdo, $flash) {
                     ->withStatus(302);
             }
 
-            $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
-            $stmt->execute([$normalizedUrl, date('Y-m-d H:i:s')]);
-
-            $id = $pdo->lastInsertId('urls_id_seq');
+            $id = $urlRepository->create($normalizedUrl, date('Y-m-d H:i:s'));
 
             $flash->addMessage('success', 'Страница успешно добавлена');
 
@@ -99,32 +101,12 @@ return static function ($app, $renderer, $pdo, $flash) {
             Request $request,
             Response $response
         ) use (
-            $pdo,
             $renderer,
             $flash,
-            $routeParser
+            $routeParser,
+            $urlRepository
         ) {
-            $sql = "
-                SELECT 
-                    urls.id,
-                    urls.name,
-                    urls.created_at,
-                    url_checks.created_at AS last_check_created_at,
-                    url_checks.status_code
-                FROM urls
-                LEFT JOIN (
-                    SELECT DISTINCT ON (url_id)
-                        url_id,
-                        created_at,
-                        status_code
-                    FROM url_checks
-                    ORDER BY url_id, created_at DESC
-                ) AS url_checks ON url_checks.url_id = urls.id
-                ORDER BY urls.id DESC
-            ";
-
-            $stmt = $pdo->query($sql);
-            $urls = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $urls = $urlRepository->getAllWithLastCheck();
 
             return $renderer->render($response, 'urls/index.phtml', [
                 'urls' => $urls,
@@ -143,29 +125,22 @@ return static function ($app, $renderer, $pdo, $flash) {
             Response $response,
             array $args
         ) use (
-            $pdo,
             $renderer,
             $flash,
-            $routeParser
+            $routeParser,
+            $urlRepository,
+            $urlCheckRepository,
+            $checkViewFormatter
         ) {
-            $id = $args['id'];
+            $id = (int) $args['id'];
 
-            $stmt = $pdo->prepare('SELECT id, name, created_at FROM urls WHERE id = ?');
-            $stmt->execute([$id]);
-            $url = $stmt->fetch(\PDO::FETCH_ASSOC);
-
-            $checksStmt = $pdo->prepare('
-                SELECT id, status_code, h1, title, description, created_at
-                FROM url_checks
-                WHERE url_id = ?
-                ORDER BY id DESC
-            ');
-            $checksStmt->execute([$id]);
-            $checks = $checksStmt->fetchAll(\PDO::FETCH_ASSOC);
+            $url = $urlRepository->findById($id);
+            $checks = $urlCheckRepository->findByUrlId($id);
+            $formattedChecks = $checkViewFormatter->formatChecks($checks);
 
             return $renderer->render($response, 'urls/show.phtml', [
                 'url' => $url,
-                'checks' => $checks,
+                'checks' => $formattedChecks,
                 'flash' => $flash->getMessage('success')[0] ?? null,
                 'errorFlash' => $flash->getMessage('error')[0] ?? null,
                 'homeUrl' => $routeParser->urlFor('home'),
@@ -181,15 +156,14 @@ return static function ($app, $renderer, $pdo, $flash) {
             Response $response,
             array $args
         ) use (
-            $pdo,
             $flash,
-            $routeParser
+            $routeParser,
+            $urlRepository,
+            $urlCheckRepository
         ) {
-            $urlId = $args['id'];
+            $urlId = (int) $args['id'];
 
-            $stmt = $pdo->prepare('SELECT id, name FROM urls WHERE id = ?');
-            $stmt->execute([$urlId]);
-            $url = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $url = $urlRepository->findById($urlId);
 
             $client = new Client([
                 'timeout' => 10,
@@ -216,18 +190,14 @@ return static function ($app, $renderer, $pdo, $flash) {
                     ? trim((string) $crawler->filter('meta[name="description"]')->first()->attr('content'))
                     : null;
 
-                $stmt = $pdo->prepare(
-                    'INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?)'
-                );
-                $stmt->execute([
+                $urlCheckRepository->create(
                     $urlId,
                     $statusCode,
                     $h1,
                     $title,
                     $description,
-                    date('Y-m-d H:i:s'),
-                ]);
+                    date('Y-m-d H:i:s')
+                );
 
                 $flash->addMessage('success', 'Страница успешно проверена');
             } catch (GuzzleException $e) {

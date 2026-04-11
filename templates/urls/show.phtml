@@ -1,6 +1,6 @@
 <?php
 /** @var array{id:int,name:string,created_at:string} $url */
-/** @var array<int, array{id:int,status_code:int|null,h1:string|null,title:string|null,description:string|null,created_at:string}> $checks */
+/** @var array<int, array{id:int,status_code:int|null,h1:string,title:string,description:string,created_at:string}> $checks */
 ?>
 
 <h1 class="mb-5">Сайт: <?= htmlspecialchars($url['name']) ?></h1>
@@ -46,9 +46,9 @@
         <tr>
             <td><?= htmlspecialchars((string) $check['id']) ?></td>
             <td><?= htmlspecialchars((string) ($check['status_code'] ?? '')) ?></td>
-            <td><?= htmlspecialchars(truncate($check['h1'])) ?></td>
-            <td><?= htmlspecialchars(truncate($check['title'])) ?></td>
-            <td><?= htmlspecialchars(truncate($check['description'])) ?></td>
+            <td><?= htmlspecialchars($check['h1']) ?></td>
+            <td><?= htmlspecialchars($check['title']) ?></td>
+            <td><?= htmlspecialchars($check['description']) ?></td>
             <td><?= htmlspecialchars($check['created_at']) ?></td>
         </tr>
     <?php endforeach; ?>
