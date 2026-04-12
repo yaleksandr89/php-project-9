@@ -84,13 +84,13 @@ make start
 * `Repositories` - работа с базой данных
 * `Support` - вспомогательные классы (форматирование, подготовка данных)
 
-## Демо
+## Демонстрация работы
 
-### Валидный сценарий
+### Успешный сценарий
 
-Основное видео:
+Youtube:
 
-[![Демо валидного сценария](https://img.youtube.com/vi/2oLmo9_yi_8/0.jpg)](https://www.youtube.com/watch?v=2oLmo9_yi_8)
+[![Демонстрация валидного сценария](https://img.youtube.com/vi/2oLmo9_yi_8/0.jpg)](https://www.youtube.com/watch?v=2oLmo9_yi_8)
 
 Альтернативные ссылки:
 * Яндекс.Диск: https://disk.yandex.ru/i/X7tV9hu9GM5ysg
@@ -98,11 +98,11 @@ make start
 
 ### Невалидный сценарий
 
-Основное видео:
+Youtube:
 
-[![Демо валидного сценария](https://img.youtube.com/vi/HGHEhsdk9q8/0.jpg)](https://www.youtube.com/watch?v=HGHEhsdk9q8)
+[![Демонстрация невалидного сценария](https://img.youtube.com/vi/GKXIsw_aYZQ/0.jpg)](https://youtu.be/GKXIsw_aYZQ)
 
 Альтернативные ссылки:
-* Яндекс.Диск: https://disk.yandex.ru/i/cY_ZDHB4zltRFw
-* Google Drive: https://drive.google.com/file/d/1ttAk0wd19BmyVND4AGi12Nmvi7Z96OsU/view?usp=sharing
+* Яндекс.Диск: https://disk.yandex.ru/i/miBr4q1A8qQHhA
+* Google Drive: https://drive.google.com/file/d/1AFUGtV1J_JVHIYBG8xxpnwCdm1vd_LF7/view?usp=sharing
 
