@@ -21,7 +21,7 @@
 * добавлять URL
 * проверять доступность страниц
 * сохранять историю проверок
-* выполнять базовый SEO-анализ (_h1_, _title_, _description_)
+* выполнять базовый SEO-анализ (*h1*, *title*, *description*)
 
 ## Требования
 
@@ -30,7 +30,11 @@
 * `Make`
 * `PostgreSQL`
 
-## Установка
+---
+
+## Установка (локально)
+
+Для корректной работы на ПК должны быть установлены PHP и PostgreSQL.
 
 ```bash
 make install
@@ -40,7 +44,11 @@ make install
 
 Необходимо задать переменную окружения: `DATABASE_URL`
 
-Пример: `postgresql://user:password@localhost:5432/dbname`
+Пример:
+
+```
+postgresql://user:password@localhost:5432/dbname
+```
 
 ## Инициализация базы данных
 
@@ -48,7 +56,11 @@ make install
 psql -d "<DATABASE_URL>" -f database.sql
 ```
 
-Пример: `psql -d "postgresql://user:password@localhost:5432/dbname" -f database.sql`
+Пример:
+
+```bash
+psql -d "postgresql://user:password@localhost:5432/dbname" -f database.sql
+```
 
 ## Запуск
 
@@ -58,6 +70,65 @@ make start
 
 Приложение будет доступно по адресу: http://localhost:8000
 
+---
+
+## Запуск через Docker
+
+Если на ПК не установлены PHP и PostgreSQL, проект можно запустить через Docker.
+
+### Первый запуск
+
+**Поднять контейнеры:**
+
+```bash
+make docker-up
+```
+
+**Инициализировать базу данных:**
+
+```bash
+make docker-db-init
+```
+
+После этого приложение будет доступно по адресу:
+
+http://localhost:8000
+
+### Повторный запуск
+
+```bash
+make docker-up
+```
+
+### Остановка контейнеров
+
+```bash
+make docker-down
+```
+
+### Просмотр логов
+
+```bash
+make docker-logs
+```
+
+### Вход в контейнер приложения
+
+```bash
+make docker-shell
+```
+
+### Когда нужно выполнять `docker-db-init`
+
+Команду нужно запускать только если:
+
+* это первый запуск проекта
+* база данных пустая
+* был удалён Docker volume
+* база была пересоздана
+
+---
+
 ## Функциональность
 
 * Добавление сайтов
@@ -65,9 +136,11 @@ make start
 * Хранение истории проверок
 * Отображение последней проверки
 * SEO-анализ страницы:
-  * _h1_
-  * _title_
-  * _meta description_
+  * *h1*
+  * *title*
+  * *meta description*
+
+---
 
 ## Технологии
 
@@ -77,12 +150,16 @@ make start
 * `Guzzle` (HTTP-клиент)
 * `Symfony DomCrawler` + `CSS Selector`
 
+---
+
 ## Архитектура
 
-* `Controllers` - обработка HTTP-запросов
-* `Services` - бизнес-логика
-* `Repositories` - работа с базой данных
-* `Support` - вспомогательные классы (форматирование, подготовка данных)
+* `Controllers` — обработка HTTP-запросов
+* `Services` — бизнес-логика
+* `Repositories` — работа с базой данных
+* `Support` — вспомогательные классы
+
+---
 
 ## Демонстрация работы
 
@@ -93,16 +170,19 @@ Youtube:
 [![Демонстрация валидного сценария](https://img.youtube.com/vi/2oLmo9_yi_8/0.jpg)](https://www.youtube.com/watch?v=2oLmo9_yi_8)
 
 Альтернативные ссылки:
+
 * Яндекс.Диск: https://disk.yandex.ru/i/X7tV9hu9GM5ysg
 * Google Drive: https://drive.google.com/file/d/1tXdQczdzpKv2FxxWfvPHegZQ1l0I76-Y/view
 
-### Невалидный сценарий
+---
+
+### Невалидные сценарии
 
 Youtube:
 
-[![Демонстрация невалидного сценария](https://img.youtube.com/vi/GKXIsw_aYZQ/0.jpg)](https://youtu.be/GKXIsw_aYZQ)
+[![Демонстрация невалидных сценариев](https://img.youtube.com/vi/GKXIsw_aYZQ/0.jpg)](https://youtu.be/GKXIsw_aYZQ)
 
 Альтернативные ссылки:
+
 * Яндекс.Диск: https://disk.yandex.ru/i/miBr4q1A8qQHhA
 * Google Drive: https://drive.google.com/file/d/1AFUGtV1J_JVHIYBG8xxpnwCdm1vd_LF7/view?usp=sharing
-
