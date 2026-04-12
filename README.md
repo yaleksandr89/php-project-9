@@ -1,5 +1,13 @@
 [![Actions Status](https://github.com/yaleksandr89/php-project-9/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/yaleksandr89/php-project-9/actions)
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=yaleksandr89_php-project-9&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=yaleksandr89_php-project-9)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=yaleksandr89_php-project-9&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=yaleksandr89_php-project-9)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=yaleksandr89_php-project-9&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=yaleksandr89_php-project-9)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=yaleksandr89_php-project-9&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=yaleksandr89_php-project-9)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=yaleksandr89_php-project-9&metric=bugs)](https://sonarcloud.io/summary/new_code?id=yaleksandr89_php-project-9)
+
+---
+
 # Анализатор страниц
 
 Демо: https://php-project-9-4jym.onrender.com
@@ -75,3 +83,26 @@ make start
 * `Services` - бизнес-логика
 * `Repositories` - работа с базой данных
 * `Support` - вспомогательные классы (форматирование, подготовка данных)
+
+## Демо
+
+### Валидный сценарий
+
+Основное видео:
+
+[![Демо валидного сценария](https://img.youtube.com/vi/2oLmo9_yi_8/0.jpg)](https://www.youtube.com/watch?v=2oLmo9_yi_8)
+
+Альтернативные ссылки:
+* Яндекс.Диск: https://disk.yandex.ru/i/X7tV9hu9GM5ysg
+* Google Drive: https://drive.google.com/file/d/1tXdQczdzpKv2FxxWfvPHegZQ1l0I76-Y/view
+
+### Невалидный сценарий
+
+Основное видео:
+
+[![Демо валидного сценария](https://img.youtube.com/vi/HGHEhsdk9q8/0.jpg)](https://www.youtube.com/watch?v=HGHEhsdk9q8)
+
+Альтернативные ссылки:
+* Яндекс.Диск: https://disk.yandex.ru/i/cY_ZDHB4zltRFw
+* Google Drive: https://drive.google.com/file/d/1ttAk0wd19BmyVND4AGi12Nmvi7Z96OsU/view?usp=sharing
+
