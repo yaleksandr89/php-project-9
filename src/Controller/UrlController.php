@@ -31,8 +31,9 @@ readonly class UrlController
 
     public function store(Request $request, Response $response): Response
     {
-        $data = $request->getParsedBody();
-        $url = trim($data['url'] ?? '');
+        $parsedBody = $request->getParsedBody();
+        $data = is_array($parsedBody) ? $parsedBody : [];
+        $url = trim((string) ($data['url'] ?? ''));
 
         $errors = $this->urlService->validate($url);
 
@@ -51,11 +52,14 @@ readonly class UrlController
         $normalizedUrl = $this->urlService->normalize($url);
         $existingUrl = $this->urlRepository->findByName($normalizedUrl);
 
-        if ($existingUrl) {
+        if ($existingUrl !== false) {
             $this->flash->addMessage('success', 'Страница уже существует');
 
             return $response
-                ->withHeader('Location', $this->routeParser->urlFor('urls.show', ['id' => $existingUrl['id']]))
+                ->withHeader(
+                    'Location',
+                    $this->routeParser->urlFor('urls.show', ['id' => (string) $existingUrl['id']])
+                )
                 ->withStatus(302);
         }
 
@@ -64,7 +68,10 @@ readonly class UrlController
         $this->flash->addMessage('success', 'Страница успешно добавлена');
 
         return $response
-            ->withHeader('Location', $this->routeParser->urlFor('urls.show', ['id' => $id]))
+            ->withHeader(
+                'Location',
+                $this->routeParser->urlFor('urls.show', ['id' => (string) $id])
+            )
             ->withStatus(302);
     }
 

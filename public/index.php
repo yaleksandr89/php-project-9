@@ -30,9 +30,8 @@ $checkViewFormatter = new CheckViewFormatter();
 $urlService = new UrlService();
 $seoAnalyzer = new SeoAnalyzer();
 $httpClient = new Client([
-    'timeout' => 10,
+    'timeout' => 15,
     'allow_redirects' => true,
-    'http_errors' => false,
 ]);
 $urlCheckService = new UrlCheckService($httpClient, $seoAnalyzer);
 

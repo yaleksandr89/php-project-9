@@ -10,6 +10,7 @@ use App\Service\UrlCheckService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Slim\Flash\Messages;
 use Slim\Interfaces\RouteParserInterface;
+use RuntimeException;
 
 readonly class UrlCheckController
 {
@@ -27,13 +28,20 @@ readonly class UrlCheckController
         $urlId = (int) $args['id'];
         $url = $this->urlRepository->findById($urlId);
 
+        if ($url === false) {
+            throw new RuntimeException("URL with id {$urlId} not found");
+        }
+
         $checkResult = $this->urlCheckService->check($url['name']);
 
         if ($checkResult['success'] === false) {
             $this->flash->addMessage('error', $checkResult['error']);
 
             return $response
-                ->withHeader('Location', $this->routeParser->urlFor('urls.show', ['id' => $urlId]))
+                ->withHeader(
+                    'Location',
+                    $this->routeParser->urlFor('urls.show', ['id' => (string) $urlId])
+                )
                 ->withStatus(302);
         }
 
@@ -49,7 +57,10 @@ readonly class UrlCheckController
         $this->flash->addMessage('success', 'Страница успешно проверена');
 
         return $response
-            ->withHeader('Location', $this->routeParser->urlFor('urls.show', ['id' => $urlId]))
+            ->withHeader(
+                'Location',
+                $this->routeParser->urlFor('urls.show', ['id' => (string) $urlId])
+            )
             ->withStatus(302);
     }
 }
