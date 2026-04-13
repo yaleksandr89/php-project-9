@@ -10,9 +10,11 @@ use App\Repository\UrlCheckRepository;
 use App\Repository\UrlRepository;
 use App\Service\SeoAnalyzer;
 use App\Service\UrlCheckService;
+use App\Service\UrlPageService;
 use App\Service\UrlService;
 use App\Support\CheckViewFormatter;
 use App\Support\ViewDataPreparer;
+use App\Support\WebResponder;
 use GuzzleHttp\Client;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Exception\HttpNotFoundException;
@@ -40,7 +42,6 @@ $httpClient = new Client([
 ]);
 $urlCheckService = new UrlCheckService($httpClient, $seoAnalyzer);
 
-// Создание приложения
 $app = AppFactory::create();
 
 // Инициализация рендерера шаблонов
@@ -50,6 +51,15 @@ $renderer->setLayout('layout.phtml');
 // Подготовка общих данных для шаблонов
 $routeParser = $app->getRouteCollector()->getRouteParser();
 $viewDataPreparer = new ViewDataPreparer($flash, $routeParser);
+$webResponder = new WebResponder($renderer, $viewDataPreparer, $flash, $routeParser);
+
+// Сервис подготовки данных для страниц URL
+$urlPageService = new UrlPageService(
+    $urlRepository,
+    $urlCheckRepository,
+    $checkViewFormatter,
+    $routeParser
+);
 
 // Настройка кастомной обработки ошибок
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
@@ -78,7 +88,7 @@ $errorMiddleware->setErrorHandler(
     }
 );
 
-// Обработчик остальных ошибок приложения
+// Обработчик остальных ошибок
 $errorMiddleware->setDefaultErrorHandler(
     function (
         ServerRequestInterface $request,
@@ -102,20 +112,14 @@ $errorMiddleware->setDefaultErrorHandler(
 );
 
 // Инициализация контроллеров
-$homeController = new HomeController($renderer, $viewDataPreparer);
+$homeController = new HomeController($webResponder);
 $urlController = new UrlController(
-    $renderer,
-    $viewDataPreparer,
-    $flash,
-    $routeParser,
-    $urlRepository,
-    $urlCheckRepository,
-    $checkViewFormatter,
-    $urlService
+    $webResponder,
+    $urlService,
+    $urlPageService
 );
 $urlCheckController = new UrlCheckController(
-    $flash,
-    $routeParser,
+    $webResponder,
     $urlRepository,
     $urlCheckRepository,
     $urlCheckService

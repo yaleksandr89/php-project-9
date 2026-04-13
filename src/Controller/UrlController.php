@@ -4,29 +4,19 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Repository\UrlCheckRepository;
-use App\Repository\UrlRepository;
+use App\Service\UrlPageService;
 use App\Service\UrlService;
-use App\Support\CheckViewFormatter;
-use App\Support\ViewDataPreparer;
+use App\Support\WebResponder;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
-use Slim\Flash\Messages;
-use Slim\Interfaces\RouteParserInterface;
-use Slim\Views\PhpRenderer;
 
 readonly class UrlController
 {
     public function __construct(
-        private PhpRenderer $renderer,
-        private ViewDataPreparer $viewDataPreparer,
-        private Messages $flash,
-        private RouteParserInterface $routeParser,
-        private UrlRepository $urlRepository,
-        private UrlCheckRepository $urlCheckRepository,
-        private CheckViewFormatter $checkViewFormatter,
-        private UrlService $urlService
+        private WebResponder $webResponder,
+        private UrlService $urlService,
+        private UrlPageService $urlPageService
     ) {
     }
 
@@ -39,83 +29,65 @@ readonly class UrlController
         $errors = $this->urlService->validate($url);
 
         if ($errors !== []) {
-            return $this->renderer->render(
+            return $this->webResponder->render(
                 $response->withStatus(422),
                 'index.phtml',
-                $this->viewDataPreparer->prepare([
+                [
                     'url' => $url,
                     'errors' => $errors,
                     'flash' => null,
-                ])
+                ]
             );
         }
 
         $normalizedUrl = $this->urlService->normalize($url);
-        $existingUrl = $this->urlRepository->findByName($normalizedUrl);
+        $existingUrl = $this->urlPageService->findExistingUrl($normalizedUrl);
 
         if ($existingUrl !== false) {
-            $this->flash->addMessage('success', 'Страница уже существует');
+            $this->webResponder->addSuccessMessage('Страница уже существует');
 
-            return $response
-                ->withHeader(
-                    'Location',
-                    $this->routeParser->urlFor('urls.show', ['id' => (string) $existingUrl['id']])
-                )
-                ->withStatus(302);
+            return $this->webResponder->redirect(
+                $response,
+                'urls.show',
+                ['id' => (string) $existingUrl['id']]
+            );
         }
 
-        $id = $this->urlRepository->create($normalizedUrl, date('Y-m-d H:i:s'));
+        $id = $this->urlPageService->createUrl($normalizedUrl, date('Y-m-d H:i:s'));
 
-        $this->flash->addMessage('success', 'Страница успешно добавлена');
+        $this->webResponder->addSuccessMessage('Страница успешно добавлена');
 
-        return $response
-            ->withHeader(
-                'Location',
-                $this->routeParser->urlFor('urls.show', ['id' => (string) $id])
-            )
-            ->withStatus(302);
+        return $this->webResponder->redirect(
+            $response,
+            'urls.show',
+            ['id' => (string) $id]
+        );
     }
 
     public function index(Response $response): Response
     {
-        $urls = $this->urlRepository->getAllWithLastCheck();
-
-        $preparedUrls = array_map(function (array $url): array {
-            $url['showUrl'] = $this->routeParser->urlFor('urls.show', ['id' => (string) $url['id']]);
-
-            return $url;
-        }, $urls);
-
-        return $this->renderer->render(
+        return $this->webResponder->render(
             $response,
             'urls/index.phtml',
-            $this->viewDataPreparer->prepare([
-                'urls' => $preparedUrls,
-            ])
+            [
+                'urls' => $this->urlPageService->getUrlsForIndex(),
+            ]
         );
     }
 
     public function show(Request $request, Response $response, array $args): Response
     {
         $id = (int) $args['id'];
+        $pageData = $this->urlPageService->getUrlPageData($id);
 
-        $url = $this->urlRepository->findById($id);
-
-        if ($url === false) {
+        if ($pageData === false) {
             throw new HttpNotFoundException($request);
         }
 
-        $checks = $this->urlCheckRepository->findByUrlId($id);
-        $formattedChecks = $this->checkViewFormatter->formatChecks($checks);
-
-        return $this->renderer->render(
+        return $this->webResponder->render(
             $response,
             'urls/show.phtml',
-            $this->viewDataPreparer->prepare([
-                'url' => $url,
-                'checks' => $formattedChecks,
-                'checkStoreUrl' => $this->routeParser->urlFor('checks.store', ['id' => (string) $id]),
-            ])
+            $pageData
         );
     }
 }

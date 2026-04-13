@@ -7,17 +7,15 @@ namespace App\Controller;
 use App\Repository\UrlCheckRepository;
 use App\Repository\UrlRepository;
 use App\Service\UrlCheckService;
+use App\Support\WebResponder;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
-use Slim\Flash\Messages;
-use Slim\Interfaces\RouteParserInterface;
 
 readonly class UrlCheckController
 {
     public function __construct(
-        private Messages $flash,
-        private RouteParserInterface $routeParser,
+        private WebResponder $webResponder,
         private UrlRepository $urlRepository,
         private UrlCheckRepository $urlCheckRepository,
         private UrlCheckService $urlCheckService
@@ -36,14 +34,13 @@ readonly class UrlCheckController
         $checkResult = $this->urlCheckService->check($url['name']);
 
         if ($checkResult['success'] === false) {
-            $this->flash->addMessage('error', $checkResult['error']);
+            $this->webResponder->addErrorMessage($checkResult['error']);
 
-            return $response
-                ->withHeader(
-                    'Location',
-                    $this->routeParser->urlFor('urls.show', ['id' => (string) $urlId])
-                )
-                ->withStatus(302);
+            return $this->webResponder->redirect(
+                $response,
+                'urls.show',
+                ['id' => (string) $urlId]
+            );
         }
 
         $this->urlCheckRepository->create(
@@ -55,13 +52,12 @@ readonly class UrlCheckController
             date('Y-m-d H:i:s')
         );
 
-        $this->flash->addMessage('success', 'Страница успешно проверена');
+        $this->webResponder->addSuccessMessage('Страница успешно проверена');
 
-        return $response
-            ->withHeader(
-                'Location',
-                $this->routeParser->urlFor('urls.show', ['id' => (string) $urlId])
-            )
-            ->withStatus(302);
+        return $this->webResponder->redirect(
+            $response,
+            'urls.show',
+            ['id' => (string) $urlId]
+        );
     }
 }
