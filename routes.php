@@ -30,7 +30,7 @@ return static function (
 
     // Страница URL
     $app->get('/urls/{id}', function (Request $request, Response $response, array $args) use ($urlController) {
-        return $urlController->show($response, $args);
+        return $urlController->show($request, $response, $args);
     })->setName('urls.show');
 
     // Запуск проверки URL
@@ -39,6 +39,6 @@ return static function (
         Response $response,
         array $args
     ) use ($urlCheckController) {
-        return $urlCheckController->store($response, $args);
+        return $urlCheckController->store($request, $response, $args);
     })->setName('checks.store');
 };

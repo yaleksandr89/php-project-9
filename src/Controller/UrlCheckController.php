@@ -8,9 +8,10 @@ use App\Repository\UrlCheckRepository;
 use App\Repository\UrlRepository;
 use App\Service\UrlCheckService;
 use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Exception\HttpNotFoundException;
 use Slim\Flash\Messages;
 use Slim\Interfaces\RouteParserInterface;
-use RuntimeException;
 
 readonly class UrlCheckController
 {
@@ -23,13 +24,13 @@ readonly class UrlCheckController
     ) {
     }
 
-    public function store(Response $response, array $args): Response
+    public function store(Request $request, Response $response, array $args): Response
     {
         $urlId = (int) $args['id'];
         $url = $this->urlRepository->findById($urlId);
 
         if ($url === false) {
-            throw new RuntimeException("URL with id {$urlId} not found");
+            throw new HttpNotFoundException($request);
         }
 
         $checkResult = $this->urlCheckService->check($url['name']);

@@ -11,6 +11,7 @@ use App\Support\CheckViewFormatter;
 use App\Support\ViewDataPreparer;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Exception\HttpNotFoundException;
 use Slim\Flash\Messages;
 use Slim\Interfaces\RouteParserInterface;
 use Slim\Views\PhpRenderer;
@@ -88,11 +89,16 @@ readonly class UrlController
         );
     }
 
-    public function show(Response $response, array $args): Response
+    public function show(Request $request, Response $response, array $args): Response
     {
         $id = (int) $args['id'];
 
         $url = $this->urlRepository->findById($id);
+
+        if ($url === false) {
+            throw new HttpNotFoundException($request);
+        }
+
         $checks = $this->urlCheckRepository->findByUrlId($id);
         $formattedChecks = $this->checkViewFormatter->formatChecks($checks);
 
