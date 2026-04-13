@@ -36,28 +36,13 @@ readonly class UrlRepository
         return (int) $this->pdo->lastInsertId('urls_id_seq');
     }
 
-    public function getAllWithLastCheck(): array
+    public function getAll(): array
     {
-        $sql = "
-            SELECT 
-                urls.id,
-                urls.name,
-                urls.created_at,
-                url_checks.created_at AS last_check_created_at,
-                url_checks.status_code
+        $stmt = $this->pdo->query('
+            SELECT id, name, created_at
             FROM urls
-            LEFT JOIN (
-                SELECT DISTINCT ON (url_id)
-                    url_id,
-                    created_at,
-                    status_code
-                FROM url_checks
-                ORDER BY url_id, created_at DESC
-            ) AS url_checks ON url_checks.url_id = urls.id
-            ORDER BY urls.id DESC
-        ";
-
-        $stmt = $this->pdo->query($sql);
+            ORDER BY id DESC
+        ');
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

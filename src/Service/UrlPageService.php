@@ -31,10 +31,17 @@ readonly class UrlPageService
 
     public function getUrlsForIndex(): array
     {
-        $urls = $this->urlRepository->getAllWithLastCheck();
+        $urls = $this->urlRepository->getAll();
+        $urlIds = array_map(static fn(array $url): int => (int) $url['id'], $urls);
+        $lastChecks = $this->urlCheckRepository->findLastByUrlIds($urlIds);
 
-        return array_map(function (array $url): array {
-            $url['showUrl'] = $this->routeParser->urlFor('urls.show', ['id' => (string) $url['id']]);
+        return array_map(function (array $url) use ($lastChecks): array {
+            $urlId = (int) $url['id'];
+            $lastCheck = $lastChecks[$urlId] ?? null;
+
+            $url['showUrl'] = $this->routeParser->urlFor('urls.show', ['id' => (string) $urlId]);
+            $url['status_code'] = $lastCheck['status_code'] ?? null;
+            $url['last_check_created_at'] = $lastCheck['created_at'] ?? null;
 
             return $url;
         }, $urls);

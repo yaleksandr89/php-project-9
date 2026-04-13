@@ -25,6 +25,35 @@ readonly class UrlCheckRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function findLastByUrlIds(array $urlIds): array
+    {
+        if ($urlIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($urlIds), '?'));
+
+        $stmt = $this->pdo->prepare("
+            SELECT DISTINCT ON (url_id)
+                url_id,
+                status_code,
+                created_at
+            FROM url_checks
+            WHERE url_id IN ($placeholders)
+            ORDER BY url_id, created_at DESC
+        ");
+        $stmt->execute($urlIds);
+
+        $checks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = [];
+
+        foreach ($checks as $check) {
+            $result[(int) $check['url_id']] = $check;
+        }
+
+        return $result;
+    }
+
     public function create(
         int $urlId,
         ?int $statusCode,
