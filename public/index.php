@@ -122,7 +122,7 @@ $urlCheckController = new UrlCheckController(
 );
 
 // Регистрация маршрутов
-$registerRoutes = require __DIR__ . '/../routes.php';
+$registerRoutes = require __DIR__ . '/../src/routes.php';
 $registerRoutes(
     $app,
     $homeController,

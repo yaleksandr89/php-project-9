@@ -29,12 +29,12 @@ return static function (
     })->setName('urls.index');
 
     // Страница URL
-    $app->get('/urls/{id}', function (Request $request, Response $response, array $args) use ($urlController) {
+    $app->get('/urls/{id:[0-9]+}', function (Request $request, Response $response, array $args) use ($urlController) {
         return $urlController->show($request, $response, $args);
     })->setName('urls.show');
 
     // Запуск проверки URL
-    $app->post('/urls/{id}/checks', function (
+    $app->post('/urls/{id:[0-9]+}/checks', function (
         Request $request,
         Response $response,
         array $args

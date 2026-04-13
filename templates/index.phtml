@@ -1,6 +1,7 @@
 <?php
 /** @var string $url */
 /** @var array<int, string> $errors */
+/** @var string $urlsUrl */
 ?>
 
 <div class="row">
@@ -10,7 +11,7 @@
             <p class="lead">
                 Бесплатно проверяйте сайты на SEO пригодность
             </p>
-            <form action="/urls" method="post" class="row g-2 mt-3">
+            <form action="<?= htmlspecialchars($urlsUrl) ?>" method="post" class="row g-2 mt-3">
                 <div class="col-md-8">
                     <input
                             type="text"

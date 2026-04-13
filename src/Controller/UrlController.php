@@ -80,11 +80,17 @@ readonly class UrlController
     {
         $urls = $this->urlRepository->getAllWithLastCheck();
 
+        $preparedUrls = array_map(function (array $url): array {
+            $url['showUrl'] = $this->routeParser->urlFor('urls.show', ['id' => (string) $url['id']]);
+
+            return $url;
+        }, $urls);
+
         return $this->renderer->render(
             $response,
             'urls/index.phtml',
             $this->viewDataPreparer->prepare([
-                'urls' => $urls,
+                'urls' => $preparedUrls,
             ])
         );
     }
@@ -108,6 +114,7 @@ readonly class UrlController
             $this->viewDataPreparer->prepare([
                 'url' => $url,
                 'checks' => $formattedChecks,
+                'checkStoreUrl' => $this->routeParser->urlFor('checks.store', ['id' => (string) $id]),
             ])
         );
     }
