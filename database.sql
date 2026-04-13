@@ -10,7 +10,7 @@ CREATE TABLE url_checks
     id          BIGSERIAL PRIMARY KEY,
     url_id      BIGINT NOT NULL REFERENCES urls (id) ON DELETE CASCADE,
     status_code INTEGER,
-    h1          TEXT,
+    h1          VARCHAR(1000),
     title       TEXT,
     description TEXT,
     created_at  TIMESTAMP NOT NULL
