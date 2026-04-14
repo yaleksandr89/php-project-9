@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Service\UrlPageService;
 use App\Service\UrlService;
 use App\Support\WebResponder;
+use DateTimeImmutable;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
@@ -49,11 +50,14 @@ readonly class UrlController
             return $this->webResponder->redirect(
                 $response,
                 'urls.show',
-                ['id' => (string) $existingUrl['id']]
+                ['id' => (string) $existingUrl->getId()]
             );
         }
 
-        $id = $this->urlPageService->createUrl($normalizedUrl, date('Y-m-d H:i:s'));
+        $id = $this->urlPageService->createUrl(
+            $normalizedUrl,
+            new DateTimeImmutable()->format('Y-m-d H:i:s')
+        );
 
         $this->webResponder->addSuccessMessage('Страница успешно добавлена');
 

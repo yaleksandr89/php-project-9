@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Entity\UrlCheck;
+
 class CheckViewFormatter
 {
     public function formatChecks(array $checks): array
     {
-        return array_map(function (array $check): array {
-            $check['h1'] = $this->truncate($check['h1'] ?? null);
-            $check['title'] = $this->truncate($check['title'] ?? null);
-            $check['description'] = $this->truncate($check['description'] ?? null);
-
-            return $check;
+        return array_map(function (UrlCheck $check): array {
+            return [
+                'id' => $check->getId(),
+                'status_code' => $check->getStatusCode(),
+                'h1' => $this->truncate($check->getH1()),
+                'title' => $this->truncate($check->getTitle()),
+                'description' => $this->truncate($check->getDescription()),
+                'created_at' => $check->getCreatedAt(),
+            ];
         }, $checks);
     }
 

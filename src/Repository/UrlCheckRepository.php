@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\UrlCheck;
 use PDO;
 
 readonly class UrlCheckRepository
@@ -15,14 +16,16 @@ readonly class UrlCheckRepository
     public function findByUrlId(int $urlId): array
     {
         $stmt = $this->pdo->prepare('
-            SELECT id, status_code, h1, title, description, created_at
+            SELECT id, url_id, status_code, h1, title, description, created_at
             FROM url_checks
             WHERE url_id = ?
             ORDER BY id DESC
         ');
         $stmt->execute([$urlId]);
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(fn(array $row): UrlCheck => $this->hydrate($row), $rows);
     }
 
     public function findLastByUrlIds(array $urlIds): array
@@ -35,8 +38,12 @@ readonly class UrlCheckRepository
 
         $stmt = $this->pdo->prepare("
             SELECT DISTINCT ON (url_id)
+                id,
                 url_id,
                 status_code,
+                h1,
+                title,
+                description,
                 created_at
             FROM url_checks
             WHERE url_id IN ($placeholders)
@@ -44,36 +51,44 @@ readonly class UrlCheckRepository
         ");
         $stmt->execute($urlIds);
 
-        $checks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $result = [];
 
-        foreach ($checks as $check) {
-            $result[(int) $check['url_id']] = $check;
+        foreach ($rows as $row) {
+            $check = $this->hydrate($row);
+            $result[$check->getUrlId()] = $check;
         }
 
         return $result;
     }
 
-    public function create(
-        int $urlId,
-        ?int $statusCode,
-        ?string $h1,
-        ?string $title,
-        ?string $description,
-        string $createdAt
-    ): void {
+    public function create(UrlCheck $check): void
+    {
         $stmt = $this->pdo->prepare('
             INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
         ');
 
         $stmt->execute([
-            $urlId,
-            $statusCode,
-            $h1,
-            $title,
-            $description,
-            $createdAt,
+            $check->getUrlId(),
+            $check->getStatusCode(),
+            $check->getH1(),
+            $check->getTitle(),
+            $check->getDescription(),
+            $check->getCreatedAt(),
         ]);
+    }
+
+    private function hydrate(array $row): UrlCheck
+    {
+        return new UrlCheck(
+            (int) $row['id'],
+            (int) $row['url_id'],
+            isset($row['status_code']) ? (int) $row['status_code'] : null,
+            $row['h1'] !== null ? (string) $row['h1'] : null,
+            $row['title'] !== null ? (string) $row['title'] : null,
+            $row['description'] !== null ? (string) $row['description'] : null,
+            (string) $row['created_at']
+        );
     }
 }

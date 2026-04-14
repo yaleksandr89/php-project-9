@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\Url;
 use App\Repository\UrlCheckRepository;
 use App\Repository\UrlRepository;
 use App\Support\CheckViewFormatter;
@@ -19,31 +20,40 @@ readonly class UrlPageService
     ) {
     }
 
-    public function findExistingUrl(string $normalizedUrl): array|false
+    public function findExistingUrl(string $normalizedUrl): Url|false
     {
         return $this->urlRepository->findByName($normalizedUrl);
     }
 
     public function createUrl(string $normalizedUrl, string $createdAt): int
     {
-        return $this->urlRepository->create($normalizedUrl, $createdAt);
+        $url = new Url(
+            null,
+            $normalizedUrl,
+            $createdAt
+        );
+
+        return $this->urlRepository->create($url);
     }
 
     public function getUrlsForIndex(): array
     {
         $urls = $this->urlRepository->getAll();
-        $urlIds = array_map(static fn(array $url): int => (int) $url['id'], $urls);
+        $urlIds = array_map(static fn(Url $url): int => (int) $url->getId(), $urls);
         $lastChecks = $this->urlCheckRepository->findLastByUrlIds($urlIds);
 
-        return array_map(function (array $url) use ($lastChecks): array {
-            $urlId = (int) $url['id'];
+        return array_map(function (Url $url) use ($lastChecks): array {
+            $urlId = (int) $url->getId();
             $lastCheck = $lastChecks[$urlId] ?? null;
 
-            $url['showUrl'] = $this->routeParser->urlFor('urls.show', ['id' => (string) $urlId]);
-            $url['status_code'] = $lastCheck['status_code'] ?? null;
-            $url['last_check_created_at'] = $lastCheck['created_at'] ?? null;
-
-            return $url;
+            return [
+                'id' => $urlId,
+                'name' => $url->getName(),
+                'created_at' => $url->getCreatedAt(),
+                'showUrl' => $this->routeParser->urlFor('urls.show', ['id' => (string) $urlId]),
+                'status_code' => $lastCheck?->getStatusCode(),
+                'last_check_created_at' => $lastCheck?->getCreatedAt(),
+            ];
         }, $urls);
     }
 
@@ -59,7 +69,11 @@ readonly class UrlPageService
         $formattedChecks = $this->checkViewFormatter->formatChecks($checks);
 
         return [
-            'url' => $url,
+            'url' => [
+                'id' => $url->getId(),
+                'name' => $url->getName(),
+                'created_at' => $url->getCreatedAt(),
+            ],
             'checks' => $formattedChecks,
             'checkStoreUrl' => $this->routeParser->urlFor('checks.store', ['id' => (string) $id]),
         ];

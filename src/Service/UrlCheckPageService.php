@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\Url;
+use App\Entity\UrlCheck;
 use App\Repository\UrlCheckRepository;
 use App\Repository\UrlRepository;
 use DateTimeImmutable;
@@ -25,7 +27,7 @@ readonly class UrlCheckPageService
             return false;
         }
 
-        $checkResult = $this->urlCheckService->check($url['name']);
+        $checkResult = $this->urlCheckService->check($url->getName());
 
         if ($checkResult['success'] === false) {
             return [
@@ -41,14 +43,15 @@ readonly class UrlCheckPageService
         ];
     }
 
-    private function findUrl(int $urlId): array|false
+    private function findUrl(int $urlId): Url|false
     {
         return $this->urlRepository->findById($urlId);
     }
 
     private function storeCheck(int $urlId, array $checkResult): void
     {
-        $this->urlCheckRepository->create(
+        $check = new UrlCheck(
+            null,
             $urlId,
             $checkResult['status_code'],
             $checkResult['h1'],
@@ -56,5 +59,7 @@ readonly class UrlCheckPageService
             $checkResult['description'],
             new DateTimeImmutable()->format('Y-m-d H:i:s')
         );
+
+        $this->urlCheckRepository->create($check);
     }
 }
