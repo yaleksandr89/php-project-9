@@ -9,6 +9,7 @@ use App\Controller\UrlController;
 use App\Repository\UrlCheckRepository;
 use App\Repository\UrlRepository;
 use App\Service\SeoAnalyzer;
+use App\Service\UrlCheckPageService;
 use App\Service\UrlCheckService;
 use App\Service\UrlPageService;
 use App\Service\UrlService;
@@ -42,6 +43,7 @@ $httpClient = new Client([
 ]);
 $urlCheckService = new UrlCheckService($httpClient, $seoAnalyzer);
 
+// Создание приложения
 $app = AppFactory::create();
 
 // Инициализация рендерера шаблонов
@@ -59,6 +61,13 @@ $urlPageService = new UrlPageService(
     $urlCheckRepository,
     $checkViewFormatter,
     $routeParser
+);
+
+// Сервис проверки URL
+$urlCheckPageService = new UrlCheckPageService(
+    $urlRepository,
+    $urlCheckRepository,
+    $urlCheckService
 );
 
 // Настройка кастомной обработки ошибок
@@ -120,9 +129,7 @@ $urlController = new UrlController(
 );
 $urlCheckController = new UrlCheckController(
     $webResponder,
-    $urlRepository,
-    $urlCheckRepository,
-    $urlCheckService
+    $urlCheckPageService
 );
 
 // Регистрация маршрутов

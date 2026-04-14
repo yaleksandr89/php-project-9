@@ -26,7 +26,7 @@ readonly class UrlCheckService
 
             return [
                 'success' => true,
-                'statusCode' => $statusCode,
+                'status_code' => $statusCode,
                 'h1' => $seoData['h1'],
                 'title' => $seoData['title'],
                 'description' => $seoData['description'],

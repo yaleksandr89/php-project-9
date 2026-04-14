@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Repository\UrlCheckRepository;
-use App\Repository\UrlRepository;
-use App\Service\UrlCheckService;
+use App\Service\UrlCheckPageService;
 use App\Support\WebResponder;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -16,25 +14,21 @@ readonly class UrlCheckController
 {
     public function __construct(
         private WebResponder $webResponder,
-        private UrlRepository $urlRepository,
-        private UrlCheckRepository $urlCheckRepository,
-        private UrlCheckService $urlCheckService
+        private UrlCheckPageService $urlCheckPageService
     ) {
     }
 
     public function store(Request $request, Response $response, array $args): Response
     {
         $urlId = (int) $args['id'];
-        $url = $this->urlRepository->findById($urlId);
+        $result = $this->urlCheckPageService->processCheck($urlId);
 
-        if ($url === false) {
+        if ($result === false) {
             throw new HttpNotFoundException($request);
         }
 
-        $checkResult = $this->urlCheckService->check($url['name']);
-
-        if ($checkResult['success'] === false) {
-            $this->webResponder->addErrorMessage($checkResult['error']);
+        if ($result['success'] === false) {
+            $this->webResponder->addErrorMessage($result['error']);
 
             return $this->webResponder->redirect(
                 $response,
@@ -42,15 +36,6 @@ readonly class UrlCheckController
                 ['id' => (string) $urlId]
             );
         }
-
-        $this->urlCheckRepository->create(
-            $urlId,
-            $checkResult['statusCode'],
-            $checkResult['h1'],
-            $checkResult['title'],
-            $checkResult['description'],
-            date('Y-m-d H:i:s')
-        );
 
         $this->webResponder->addSuccessMessage('Страница успешно проверена');
 
