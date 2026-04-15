@@ -1,5 +1,6 @@
 <?php
 /** @var array<int, array<string, mixed>> $urls */
+/** @var Slim\Interfaces\RouteParserInterface $routeParser */
 ?>
 
 <h1 class="mb-5">Сайты</h1>
@@ -22,7 +23,7 @@
             <tr>
                 <td><?= htmlspecialchars((string) $url['id']) ?></td>
                 <td>
-                    <a href="<?= htmlspecialchars((string) $url['showUrl']) ?>">
+                    <a href="<?= htmlspecialchars($routeParser->urlFor('urls.show', ['id' => (string) $url['id']])) ?>">
                         <?= htmlspecialchars($url['name']) ?>
                     </a>
                 </td>

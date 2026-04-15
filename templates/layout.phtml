@@ -1,6 +1,5 @@
 <?php
-/** @var string $homeUrl */
-/** @var string $urlsUrl */
+/** @var Slim\Interfaces\RouteParserInterface $routeParser */
 /** @var string|null $flash */
 /** @var string|null $errorFlash */
 /** @var string $content */
@@ -23,10 +22,10 @@
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand" href="<?= htmlspecialchars($homeUrl) ?>">Анализатор страниц</a>
+        <a class="navbar-brand" href="<?= htmlspecialchars($routeParser->urlFor('home')) ?>">Анализатор страниц</a>
         <div class="navbar-nav">
-            <a class="nav-link active" href="<?= htmlspecialchars($homeUrl) ?>">Главная</a>
-            <a class="nav-link" href="<?= htmlspecialchars($urlsUrl) ?>">Сайты</a>
+            <a class="nav-link active" href="<?= htmlspecialchars($routeParser->urlFor('home')) ?>">Главная</a>
+            <a class="nav-link" href="<?= htmlspecialchars($routeParser->urlFor('urls.index')) ?>">Сайты</a>
         </div>
     </div>
 </nav>

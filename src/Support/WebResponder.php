@@ -13,7 +13,6 @@ readonly class WebResponder
 {
     public function __construct(
         private PhpRenderer $renderer,
-        private ViewDataPreparer $viewDataPreparer,
         private Messages $flash,
         private RouteParserInterface $routeParser
     ) {
@@ -24,7 +23,11 @@ readonly class WebResponder
         return $this->renderer->render(
             $response,
             $template,
-            $this->viewDataPreparer->prepare($data)
+            array_merge([
+                'flash' => $this->flash->getMessage('success')[0] ?? null,
+                'errorFlash' => $this->flash->getMessage('error')[0] ?? null,
+                'routeParser' => $this->routeParser,
+            ], $data)
         );
     }
 

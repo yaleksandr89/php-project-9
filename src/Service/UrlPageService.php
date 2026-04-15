@@ -10,15 +10,13 @@ use App\Repository\UrlRepository;
 use App\Support\CheckViewFormatter;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
-use Slim\Interfaces\RouteParserInterface;
 
 readonly class UrlPageService
 {
     public function __construct(
         private UrlRepository $urlRepository,
         private UrlCheckRepository $urlCheckRepository,
-        private CheckViewFormatter $checkViewFormatter,
-        private RouteParserInterface $routeParser
+        private CheckViewFormatter $checkViewFormatter
     ) {
     }
 
@@ -44,7 +42,7 @@ readonly class UrlPageService
         $urlIds = array_map(static fn(Url $url): int => (int) $url->getId(), $urls);
         $lastChecks = $this->urlCheckRepository->findLastByUrlIds($urlIds);
 
-        return array_map(function (Url $url) use ($lastChecks): array {
+        return array_map(static function (Url $url) use ($lastChecks): array {
             $urlId = (int) $url->getId();
             $lastCheck = $lastChecks[$urlId] ?? null;
 
@@ -52,7 +50,6 @@ readonly class UrlPageService
                 'id' => $urlId,
                 'name' => $url->getName(),
                 'created_at' => $url->getCreatedAt(),
-                'showUrl' => $this->routeParser->urlFor('urls.show', ['id' => (string) $urlId]),
                 'status_code' => $lastCheck?->getStatusCode(),
                 'last_check_created_at' => $lastCheck?->getCreatedAt(),
             ];
@@ -77,7 +74,6 @@ readonly class UrlPageService
                 'created_at' => $url->getCreatedAt(),
             ],
             'checks' => $formattedChecks,
-            'checkStoreUrl' => $this->routeParser->urlFor('checks.store', ['id' => (string) $id]),
         ];
     }
 }

@@ -14,7 +14,6 @@ use App\Service\UrlCheckService;
 use App\Service\UrlPageService;
 use App\Service\UrlService;
 use App\Support\CheckViewFormatter;
-use App\Support\ViewDataPreparer;
 use App\Support\WebResponder;
 use GuzzleHttp\Client;
 use Psr\Http\Message\ServerRequestInterface;
@@ -52,15 +51,13 @@ $renderer->setLayout('layout.phtml');
 
 // Подготовка общих данных для шаблонов
 $routeParser = $app->getRouteCollector()->getRouteParser();
-$viewDataPreparer = new ViewDataPreparer($flash, $routeParser);
-$webResponder = new WebResponder($renderer, $viewDataPreparer, $flash, $routeParser);
+$webResponder = new WebResponder($renderer, $flash, $routeParser);
 
 // Сервис подготовки данных для страниц URL
 $urlPageService = new UrlPageService(
     $urlRepository,
     $urlCheckRepository,
-    $checkViewFormatter,
-    $routeParser
+    $checkViewFormatter
 );
 
 // Сервис проверки URL
@@ -85,14 +82,19 @@ $errorMiddleware->setErrorHandler(
     ) use (
         $app,
         $renderer,
-        $viewDataPreparer
+        $flash,
+        $routeParser
     ) {
         $response = $app->getResponseFactory()->createResponse(404);
 
         return $renderer->render(
             $response,
             'errors/404.phtml',
-            $viewDataPreparer->prepare()
+            [
+                'flash' => $flash->getMessage('success')[0] ?? null,
+                'errorFlash' => $flash->getMessage('error')[0] ?? null,
+                'routeParser' => $routeParser,
+            ]
         );
     }
 );
@@ -108,14 +110,19 @@ $errorMiddleware->setDefaultErrorHandler(
     ) use (
         $app,
         $renderer,
-        $viewDataPreparer
+        $flash,
+        $routeParser
     ) {
         $response = $app->getResponseFactory()->createResponse(500);
 
         return $renderer->render(
             $response,
             'errors/500.phtml',
-            $viewDataPreparer->prepare()
+            [
+                'flash' => $flash->getMessage('success')[0] ?? null,
+                'errorFlash' => $flash->getMessage('error')[0] ?? null,
+                'routeParser' => $routeParser,
+            ]
         );
     }
 );

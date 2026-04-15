@@ -1,9 +1,9 @@
 <?php
-/** @var string $homeUrl */
+/** @var Slim\Interfaces\RouteParserInterface $routeParser */
 ?>
 
 <div class="text-center py-5">
     <h1 class="display-4">404</h1>
     <p class="lead">Страница не найдена</p>
-    <a href="<?= htmlspecialchars($homeUrl) ?>" class="btn btn-primary">На главную</a>
+    <a href="<?= htmlspecialchars($routeParser->urlFor('home')) ?>" class="btn btn-primary">На главную</a>
 </div>

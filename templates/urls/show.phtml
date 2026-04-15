@@ -1,7 +1,7 @@
 <?php
 /** @var array{id:int,name:string,created_at:string} $url */
 /** @var array<int, array{id:int,status_code:int|null,h1:string,title:string,description:string,created_at:string}> $checks */
-/** @var string $checkStoreUrl */
+/** @var Slim\Interfaces\RouteParserInterface $routeParser */
 ?>
 
 <h1 class="mb-5">Сайт: <?= htmlspecialchars($url['name']) ?></h1>
@@ -27,7 +27,7 @@
 
 <h2 class="mb-3">Проверки</h2>
 
-<form method="post" action="<?= htmlspecialchars($checkStoreUrl) ?>" class="mb-3">
+<form method="post" action="<?= htmlspecialchars($routeParser->urlFor('checks.store', ['id' => (string) $url['id']])) ?>" class="mb-3">
     <input type="submit" class="btn btn-primary" value="Запустить проверку">
 </form>
 
