@@ -8,6 +8,8 @@ use App\Entity\Url;
 use App\Repository\UrlCheckRepository;
 use App\Repository\UrlRepository;
 use App\Support\CheckViewFormatter;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Exception\HttpNotFoundException;
 use Slim\Interfaces\RouteParserInterface;
 
 readonly class UrlPageService
@@ -57,12 +59,12 @@ readonly class UrlPageService
         }, $urls);
     }
 
-    public function getUrlPageData(int $id): array|false
+    public function getUrlPageData(Request $request, int $id): array
     {
         $url = $this->urlRepository->findById($id);
 
         if ($url === false) {
-            return false;
+            throw new HttpNotFoundException($request);
         }
 
         $checks = $this->urlCheckRepository->findByUrlId($id);

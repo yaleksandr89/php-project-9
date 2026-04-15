@@ -10,7 +10,6 @@ use App\Support\WebResponder;
 use DateTimeImmutable;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Slim\Exception\HttpNotFoundException;
 
 readonly class UrlController
 {
@@ -82,11 +81,7 @@ readonly class UrlController
     public function show(Request $request, Response $response, array $args): Response
     {
         $id = (int) $args['id'];
-        $pageData = $this->urlPageService->getUrlPageData($id);
-
-        if ($pageData === false) {
-            throw new HttpNotFoundException($request);
-        }
+        $pageData = $this->urlPageService->getUrlPageData($request, $id);
 
         return $this->webResponder->render(
             $response,
