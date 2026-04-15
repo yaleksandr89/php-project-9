@@ -15,137 +15,189 @@ use App\Service\UrlPageService;
 use App\Service\UrlService;
 use App\Support\CheckViewFormatter;
 use App\Support\WebResponder;
+use DI\Container;
 use GuzzleHttp\Client;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Factory\AppFactory;
 use Slim\Flash\Messages;
+use Slim\Interfaces\RouteParserInterface;
 use Slim\Views\PhpRenderer;
 
 session_start();
 
-// Подключение к БД и инициализация flash сообщений
-$pdo = getPDO();
-$flash = new Messages();
+$container = new Container();
 
-// Инициализация репозиториев и вспомогательных классов
-$urlRepository = new UrlRepository($pdo);
-$urlCheckRepository = new UrlCheckRepository($pdo);
-$checkViewFormatter = new CheckViewFormatter();
+// >>> Базовая инфраструктура
+// БД
+$container->set(\PDO::class, function (): \PDO {
+    return getPDO();
+});
+// Флеш сообщения
+$container->set(Messages::class, function (): Messages {
+    return new Messages();
+});
+// Рендер шаблонов
+$container->set(PhpRenderer::class, function (): PhpRenderer {
+    $renderer = new PhpRenderer(__DIR__ . '/../templates');
+    $renderer->setLayout('layout.phtml');
 
-// Инициализация сервисов
-$urlService = new UrlService();
-$seoAnalyzer = new SeoAnalyzer();
-$httpClient = new Client([
-    'timeout' => 15,
-    'allow_redirects' => true,
-]);
-$urlCheckService = new UrlCheckService($httpClient, $seoAnalyzer);
+    return $renderer;
+});
+// Базовая инфраструктура <<<
 
-// Создание приложения
+// Передаём контейнер в инициализируем приложение
+AppFactory::setContainer($container);
 $app = AppFactory::create();
 
-// Инициализация рендерера шаблонов
-$renderer = new PhpRenderer(__DIR__ . '/../templates');
-$renderer->setLayout('layout.phtml');
+// Роутинг
+$container->set(RouteParserInterface::class, function () use ($app): RouteParserInterface {
+    return $app->getRouteCollector()->getRouteParser();
+});
 
-// Подготовка общих данных для шаблонов
-$routeParser = $app->getRouteCollector()->getRouteParser();
-$webResponder = new WebResponder($renderer, $flash, $routeParser);
+// >>> Репозитории
+$container->set(UrlRepository::class, function (ContainerInterface $container): UrlRepository {
+    return new UrlRepository($container->get(\PDO::class));
+});
 
-// Сервис подготовки данных для страниц URL
-$urlPageService = new UrlPageService(
-    $urlRepository,
-    $urlCheckRepository,
-    $checkViewFormatter
-);
+$container->set(UrlCheckRepository::class, function (ContainerInterface $container): UrlCheckRepository {
+    return new UrlCheckRepository($container->get(\PDO::class));
+});
+// Репозитории <<<
 
-// Сервис проверки URL
-$urlCheckPageService = new UrlCheckPageService(
-    $urlRepository,
-    $urlCheckRepository,
-    $urlCheckService
-);
+// >>> Вспомогательные классы
+$container->set(CheckViewFormatter::class, function (): CheckViewFormatter {
+    return new CheckViewFormatter();
+});
 
-// Настройка кастомной обработки ошибок
+$container->set(WebResponder::class, function (ContainerInterface $container): WebResponder {
+    return new WebResponder(
+        $container->get(PhpRenderer::class),
+        $container->get(Messages::class),
+        $container->get(RouteParserInterface::class)
+    );
+});
+// Вспомогательные классы <<<
+
+// >>> Сервисы
+$container->set(UrlService::class, function (): UrlService {
+    return new UrlService();
+});
+
+$container->set(SeoAnalyzer::class, function (): SeoAnalyzer {
+    return new SeoAnalyzer();
+});
+
+$container->set(Client::class, function (): Client {
+    return new Client([
+        'timeout' => 15,
+        'allow_redirects' => true,
+    ]);
+});
+
+$container->set(UrlCheckService::class, function (ContainerInterface $container): UrlCheckService {
+    return new UrlCheckService(
+        $container->get(Client::class),
+        $container->get(SeoAnalyzer::class)
+    );
+});
+
+$container->set(UrlPageService::class, function (ContainerInterface $container): UrlPageService {
+    return new UrlPageService(
+        $container->get(UrlRepository::class),
+        $container->get(UrlCheckRepository::class),
+        $container->get(CheckViewFormatter::class)
+    );
+});
+
+$container->set(UrlCheckPageService::class, function (ContainerInterface $container): UrlCheckPageService {
+    return new UrlCheckPageService(
+        $container->get(UrlRepository::class),
+        $container->get(UrlCheckRepository::class),
+        $container->get(UrlCheckService::class)
+    );
+});
+// Сервисы <<<
+
+// >>> Контроллеры
+$container->set(HomeController::class, function (ContainerInterface $container): HomeController {
+    return new HomeController($container->get(WebResponder::class));
+});
+
+$container->set(UrlController::class, function (ContainerInterface $container): UrlController {
+    return new UrlController(
+        $container->get(WebResponder::class),
+        $container->get(UrlService::class),
+        $container->get(UrlPageService::class)
+    );
+});
+
+$container->set(UrlCheckController::class, function (ContainerInterface $container): UrlCheckController {
+    return new UrlCheckController(
+        $container->get(WebResponder::class),
+        $container->get(UrlCheckPageService::class)
+    );
+});
+// Контроллеры <<<
+
+// >>> Обработка ошибок
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
-
-// Обработчик 404 Not Found
 $errorMiddleware->setErrorHandler(
     HttpNotFoundException::class,
     function (
         ServerRequestInterface $request,
-        Throwable $exception,
+        \Throwable $exception,
         bool $displayErrorDetails,
         bool $logErrors,
         bool $logErrorDetails
     ) use (
         $app,
-        $renderer,
-        $flash,
-        $routeParser
+        $container
     ) {
         $response = $app->getResponseFactory()->createResponse(404);
+        $flash = $container->get(Messages::class);
 
-        return $renderer->render(
+        return $container->get(PhpRenderer::class)->render(
             $response,
             'errors/404.phtml',
             [
                 'flash' => $flash->getMessage('success')[0] ?? null,
                 'errorFlash' => $flash->getMessage('error')[0] ?? null,
-                'routeParser' => $routeParser,
+                'routeParser' => $container->get(RouteParserInterface::class),
             ]
         );
     }
 );
-
-// Обработчик остальных ошибок
 $errorMiddleware->setDefaultErrorHandler(
     function (
         ServerRequestInterface $request,
-        Throwable $exception,
+        \Throwable $exception,
         bool $displayErrorDetails,
         bool $logErrors,
         bool $logErrorDetails
     ) use (
         $app,
-        $renderer,
-        $flash,
-        $routeParser
+        $container
     ) {
         $response = $app->getResponseFactory()->createResponse(500);
+        $flash = $container->get(Messages::class);
 
-        return $renderer->render(
+        return $container->get(PhpRenderer::class)->render(
             $response,
             'errors/500.phtml',
             [
                 'flash' => $flash->getMessage('success')[0] ?? null,
                 'errorFlash' => $flash->getMessage('error')[0] ?? null,
-                'routeParser' => $routeParser,
+                'routeParser' => $container->get(RouteParserInterface::class),
             ]
         );
     }
 );
-
-// Инициализация контроллеров
-$homeController = new HomeController($webResponder);
-$urlController = new UrlController(
-    $webResponder,
-    $urlService,
-    $urlPageService
-);
-$urlCheckController = new UrlCheckController(
-    $webResponder,
-    $urlCheckPageService
-);
+// Обработка ошибок <<<
 
 // Регистрация маршрутов
 $registerRoutes = require __DIR__ . '/../src/routes.php';
-$registerRoutes(
-    $app,
-    $homeController,
-    $urlController,
-    $urlCheckController
-);
+$registerRoutes($app, $container);
 
 $app->run();

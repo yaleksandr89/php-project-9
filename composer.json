@@ -12,7 +12,8 @@
     "ext-mbstring": "*",
     "guzzlehttp/guzzle": "^7.10",
     "symfony/dom-crawler": "^8.0",
-    "symfony/css-selector": "^8.0"
+    "symfony/css-selector": "^8.0",
+    "php-di/php-di": "^7.1"
   },
   "require-dev": {
     "squizlabs/php_codesniffer": "^3.10"
