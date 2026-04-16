@@ -147,7 +147,7 @@ $errorMiddleware->setErrorHandler(
     HttpNotFoundException::class,
     function (
         ServerRequestInterface $request,
-        \Throwable $exception,
+        Throwable $exception,
         bool $displayErrorDetails,
         bool $logErrors,
         bool $logErrorDetails
@@ -172,7 +172,7 @@ $errorMiddleware->setErrorHandler(
 $errorMiddleware->setDefaultErrorHandler(
     function (
         ServerRequestInterface $request,
-        \Throwable $exception,
+        Throwable $exception,
         bool $displayErrorDetails,
         bool $logErrors,
         bool $logErrorDetails

@@ -31,13 +31,13 @@
 </nav>
 
 <main class="container-lg mt-3">
-    <?php if (null !== $flash): ?>
+    <?php if ($flash !== null): ?>
         <div class="alert alert-success" role="alert">
             <?= htmlspecialchars($flash) ?>
         </div>
     <?php endif; ?>
 
-    <?php if (null !== $errorFlash): ?>
+    <?php if ($errorFlash !== null): ?>
         <div class="alert alert-danger" role="alert">
             <?= htmlspecialchars($errorFlash) ?>
         </div>
