@@ -163,11 +163,7 @@ make docker-shell
 
 ### Успешный сценарий
 
-Youtube:
-
-[![Демонстрация валидного сценария](https://img.youtube.com/vi/2oLmo9_yi_8/0.jpg)](https://www.youtube.com/watch?v=2oLmo9_yi_8)
-
-Альтернативные ссылки:
+Демонстрация валидного сценария:
 
 * Яндекс.Диск: https://disk.yandex.ru/i/X7tV9hu9GM5ysg
 * Google Drive: https://drive.google.com/file/d/1tXdQczdzpKv2FxxWfvPHegZQ1l0I76-Y/view
@@ -176,11 +172,7 @@ Youtube:
 
 ### Невалидные сценарии
 
-Youtube:
-
-[![Демонстрация невалидных сценариев](https://img.youtube.com/vi/GKXIsw_aYZQ/0.jpg)](https://youtu.be/GKXIsw_aYZQ)
-
-Альтернативные ссылки:
-
+Демонстрация невалидных сценариев:
+* 
 * Яндекс.Диск: https://disk.yandex.ru/i/miBr4q1A8qQHhA
 * Google Drive: https://drive.google.com/file/d/1AFUGtV1J_JVHIYBG8xxpnwCdm1vd_LF7/view?usp=sharing
